@@ -137,7 +137,7 @@ Conventional monitoring systems analyze numbers but fail to understand symptom c
 | 🤖 AI               | Gemini, Agentic AI     |
 | 📈 Machine Learning | XGBoost                |
 | 🔄 Automation       | n8n                    |
-| 🌐 APIs             | REST APIs, Webhooks    |
+| 🌐 APIs             | FastAPI, Webhooks    |
 | 🗄️ Data Sources    | EHR, IoT Devices, PROs |
 | 📩 Notifications    | Email, SMS             |
 | ☁️ Integration      | Cloud-Based Services   |
