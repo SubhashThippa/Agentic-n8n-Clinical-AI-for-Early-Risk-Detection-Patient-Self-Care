@@ -1,0 +1,22 @@
+
+# To set the environment variable in Windows PowerShell, use the following command:
+$env:GEMINI_API_KEY="AIzaSyC1X07xFe86Hy_NB6phtKJJswu8O9gOkPI"
+echo $env:GEMINI_API_KEY
+
+AIzaSyC1X07xFe86Hy_NB6phtKJJswu8O9gOkPI
+
+# To run api and chatbot:
+
+python -m uvicorn pregnancy_api_chatbot_2:app --reload --host 0.0.0.0 --port 8001 
+
+# To publish the chatbot UI:
+
+cd ngrok
+./ngrok http 8001
+# Then open the provided ngrok URL in the browser.
+# Example: http://abcd1234.ngrok.io/chat
+
+
+# To save the pdfs from the system into the container in Docker
+docker cp "path_of_the_folder" name_of_container:/files
+

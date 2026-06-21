@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctor Risk Report</title>
+  <style>
+    body{
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:#f3f6fb;
+      margin:0; padding:0;
+      color:#111827;
+    }
+    .container{
+      max-width: 900px;
+      margin: 22px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow:hidden;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+      border:1px solid #e5e7eb;
+    }
+    .header{
+      background: linear-gradient(90deg,#0f172a,#2563eb);
+      color:white;
+      padding:20px 26px;
+      position:relative;
+    }
+    .header h1{
+      margin:0;
+      font-size:20px;
+      font-weight:800;
+    }
+    .header p{
+      margin:6px 0 0;
+      opacity:0.95;
+      font-size:13px;
+      line-height:1.4;
+    }
+    .badge{
+      position:absolute;
+      top:16px;
+      right:16px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding:6px 10px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:700;
+    }
+    .section{
+      padding:16px 26px;
+      border-bottom:1px solid #eef2f7;
+    }
+    .section h2{
+      margin:0 0 10px;
+      font-size:15px;
+      font-weight:800;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    p{
+      margin:8px 0;
+      color:#374151;
+      font-size:13.3px;
+      line-height:1.55;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .card{
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:12px;
+    }
+    .card-title{
+      font-weight:800;
+      margin-bottom:6px;
+      color:#111827;
+      font-size:13.3px;
+    }
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:12px;
+      text-transform:capitalize;
+      border:1px solid transparent;
+    }
+    .pill.low{ background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+    .pill.medium{ background:#fffbeb; color:#b45309; border-color:#fcd34d; }
+    .pill.high{ background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      margin-top:6px;
+    }
+    th, td{
+      border:1px solid #e5e7eb;
+      padding:8px 10px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:#f3f4f6;
+      font-weight:800;
+      color:#111827;
+    }
+    .note{
+      background:#eef2ff;
+      border:1px solid #c7d2fe;
+      padding:12px;
+      border-radius:14px;
+    }
+    .critical{
+      background:#fef2f2;
+      border:1px solid #fecaca;
+      padding:12px;
+      border-radius:14px;
+    }
+    .footer{
+      padding:14px 26px;
+      font-size:11.8px;
+      color:#6b7280;
+      background:#fafafa;
+    }
+    @page { margin: 18mm; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="badge">Clinical Report</div>
+      <h1>🩺 Pregnancy Risk Triage Report</h1>
+      <p>
+        Patient ID: <b>{{ patient_id }}</b> |
+        Gestational Age: <b>{{ gestational_age_weeks }}</b> weeks |
+        Generated: <b>{{ generated_time }}</b>
+      </p>
+    </div>
+
+    <!-- Risk Summary -->
+    <div class="section">
+      <h2>📊 Risk Summary</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="card-title">Preeclampsia</div>
+          <p>
+            <span class="pill {{ pe_tier_class }}">{{ pe_tier }}</span>
+            Score: <b>{{ pe_score }}</b>
+          </p>
+          <p style="margin:0;"><b>Model Interpretation:</b> Risk-based triage only (not diagnosis).</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Macrosomia</div>
+          <p>
+            <span class="pill {{ mac_tier_class }}">{{ mac_tier }}</span>
+            Score: <b>{{ mac_score }}</b>
+          </p>
+          <p style="margin:0;"><b>Model Interpretation:</b> Risk-based coaching support.</p>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:12px;">
+        <p style="margin:0;"><b>Summary:</b> {{ summary }}</p>
+      </div>
+    </div>
+
+    <!-- Patient Vitals Snapshot -->
+    <div class="section">
+      <h2>🧾 Patient Snapshot (Recent Inputs)</h2>
+
+      <table>
+        <tr>
+          <th>Parameter</th>
+          <th>Value</th>
+          <th>Notes</th>
+        </tr>
+        <tr>
+          <td>Blood Pressure</td>
+          <td>{{ systolic_bp }}/{{ diastolic_bp }} mmHg</td>
+          <td>Hypertensive threshold ≥140/90, severe ≥160/110.</td>
+        </tr>
+        <tr>
+          <td>Proteinuria (dipstick)</td>
+          <td>{{ proteinuria_dipstick }}</td>
+          <td>≥1+ supports PE suspicion in context of HTN.</td>
+        </tr>
+        <tr>
+          <td>Symptoms</td>
+          <td>
+            Headache={{ severe_headache }},
+            Vision={{ vision_changes }},
+            RUQ Pain={{ upper_abdominal_pain }},
+            Swelling={{ swelling_face_hands }}
+          </td>
+          <td>Severe features increase escalation priority.</td>
+        </tr>
+        <tr>
+          <td>Glucose</td>
+          <td>
+            Fasting={{ fasting_glucose }} mg/dL<br/>
+            1hr PP={{ postprandial_1hr_glucose }} mg/dL
+          </td>
+          <td>Targets typically fasting &lt;95, 1hr &lt;140 (pregnancy goals).</td>
+        </tr>
+        <tr>
+          <td>HbA1c</td>
+          <td>{{ hba1c }}</td>
+          <td>Higher HbA1c indicates sustained glycemic elevation.</td>
+        </tr>
+        <tr>
+          <td>Maternal Context</td>
+          <td>
+            Age={{ maternal_age }}<br/>
+            BMI={{ pre_pregnancy_bmi }}<br/>
+            GDM={{ gdm_diagnosed }}
+          </td>
+          <td>Risk modifiers for fetal overgrowth + metabolic risk.</td>
+        </tr>
+        <tr>
+          <td>Activity / Sleep</td>
+          <td>
+            Post-meal walk={{ post_meal_walk_minutes }} min<br/>
+            Sleep={{ sleep_hours }} hrs
+          </td>
+          <td>Lifestyle factors influence glycemic response.</td>
+        </tr>
+        <tr>
+          <td>Food Log</td>
+          <td>{{ food_log_text }}</td>
+          <td>Used for dietary correlation patterns.</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Reason for Alert -->
+    <div class="section">
+      <h2>🚨 Reason for Alert</h2>
+
+      {% if recommended_action in ["ALERT_DOCTOR", "EMERGENCY"] %}
+        <div class="critical">
+          <p style="margin:0;"><b>Action Requested:</b> {{ recommended_action }}</p>
+          <p><b>Clinical Rationale:</b> {{ doctor_message }}</p>
+        </div>
+      {% else %}
+        <div class="note">
+          <p style="margin:0;"><b>Action Requested:</b> {{ recommended_action }}</p>
+          <p style="margin:0;"><b>Note:</b> This case does not require urgent escalation based on current tiering.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Suggested Next Steps -->
+    <div class="section">
+      <h2>🧭 Suggested Next Steps</h2>
+      <ul>
+        <li>Review trend: BP, symptoms, proteinuria, glucose readings</li>
+        <li>Consider confirmatory tests (protein/creatinine ratio, LFTs, platelets) if clinically indicated</li>
+        <li>Consider GDM diet review or insulin adjustment if glucose targets exceeded</li>
+        <li>Provide patient education + return precautions</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      ⚠️ This report is generated by an AI decision-support system and does not replace clinical judgment.
+      Always follow institutional protocols.
+    </div>
+
+  </div>
+</body>
+</html>

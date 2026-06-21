@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pregnancy AI Assistant • Chat Dashboard</title>
+
+  <style>
+    :root{
+      --bg:#060817;
+      --card: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.14);
+      --text:#ecf2ff;
+      --muted: rgba(236,242,255,0.70);
+      --shadow: 0 18px 70px rgba(0,0,0,0.45);
+
+      --c1: rgba(0,170,255,0.65);
+      --c2: rgba(255,80,200,0.55);
+      --c3: rgba(120,255,190,0.50);
+      --danger: rgba(255,70,70,0.72);
+      --warn: rgba(255,190,60,0.70);
+      --ok: rgba(70,255,180,0.65);
+
+      --round: 22px;
+    }
+
+    *{box-sizing:border-box;font-family: Inter, system-ui, Arial;}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% 10%, rgba(0,170,255,0.16), transparent 58%),
+        radial-gradient(900px 520px at 85% 22%, rgba(255,80,200,0.12), transparent 55%),
+        radial-gradient(800px 550px at 55% 92%, rgba(120,255,190,0.12), transparent 55%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+
+    .wrap{
+      max-width: 1350px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 16px 18px;
+      border-radius: var(--round);
+      background: linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.05));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width: 260px;
+    }
+
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--c1), var(--c2));
+      box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      letter-spacing:0.5px;
+    }
+
+    .brandText h1{
+      margin:0;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .brandText p{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top:4px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .select, .btn{
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 14px;
+      outline:none;
+      cursor:pointer;
+      font-weight: 800;
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.10);
+    }
+
+    .statusPill{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 6px rgba(70,255,180,0.12);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse{
+      0%{transform:scale(1); opacity: 1;}
+      60%{transform:scale(1.4); opacity: 0.7;}
+      100%{transform:scale(1); opacity: 1;}
+    }
+
+    /* Layout */
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel{
+      border-radius: var(--round);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    .sectionTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom: 12px;
+      gap:10px;
+    }
+    .sectionTitle h2{
+      margin:0;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .miniLabel{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Risk Cards */
+    .riskRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .riskCard{
+      border-radius: 18px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      position: relative;
+      overflow:hidden;
+    }
+
+    .riskCard:before{
+      content:"";
+      position:absolute;
+      top:-60px;
+      right:-60px;
+      width:140px;
+      height:140px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(0,170,255,0.30), transparent 60%);
+      filter: blur(0px);
+      opacity: 0.95;
+    }
+
+    .riskTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .tier{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .progress{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .bar{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--c1), var(--c2));
+      transition: width 0.45s ease;
+    }
+
+    .riskMeta{
+      display:flex;
+      justify-content:space-between;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Chat */
+    .chatWrap{
+      margin-top: 12px;
+      border-radius: var(--round);
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.25);
+      padding: 12px;
+    }
+
+    .chat{
+      height: 520px;
+      overflow:auto;
+      padding: 6px 6px 14px 6px;
+    }
+
+    .msg{
+      display:flex;
+      gap:10px;
+      margin: 12px 0;
+      align-items:flex-end;
+    }
+
+    .avatar{
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(135deg, rgba(0,170,255,0.35), rgba(255,80,200,0.25));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      flex-shrink:0;
+    }
+
+    .bubble{
+      max-width: 78%;
+      border-radius: 18px;
+      padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      line-height: 1.35;
+      font-size: 13px;
+      white-space: pre-wrap;
+      box-shadow: 0 14px 38px rgba(0,0,0,0.22);
+    }
+
+    .meta{
+      margin-top: 6px;
+      font-size: 11px;
+      color: rgba(236,242,255,0.55);
+    }
+
+    .you{
+      flex-direction: row-reverse;
+    }
+    .you .avatar{
+      background: linear-gradient(135deg, rgba(120,255,190,0.38), rgba(0,170,255,0.22));
+    }
+    .you .bubble{
+      background: rgba(0,170,255,0.14);
+      border-color: rgba(0,170,255,0.22);
+    }
+
+    .typing{
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      font-size: 13px;
+      color: var(--muted);
+      width: fit-content;
+    }
+
+    .dot3{
+      width:7px;height:7px;border-radius:999px;background: rgba(236,242,255,0.65);
+      animation: bounce 1s infinite;
+    }
+    .dot3:nth-child(2){animation-delay: .15s;}
+    .dot3:nth-child(3){animation-delay: .3s;}
+    @keyframes bounce{
+      0%,100%{transform: translateY(0); opacity: .6;}
+      50%{transform: translateY(-5px); opacity: 1;}
+    }
+
+    .composer{
+      display:flex;
+      gap:10px;
+      margin-top: 10px;
+      align-items:center;
+    }
+
+    .composer input{
+      flex:1;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      outline:none;
+      font-weight: 700;
+    }
+
+    .sendBtn{
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(135deg, var(--c1), var(--c2));
+      color: var(--text);
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .18s ease, filter .18s ease;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+    }
+    .sendBtn:hover{transform: translateY(-1px); filter: brightness(1.05);}
+
+    .chips{
+      display:flex;
+      gap:8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 12px;
+      transition: transform .18s ease, background .18s ease;
+    }
+    .chip:hover{transform: translateY(-1px); background: rgba(255,255,255,0.10);}
+
+    /* Right Sidebar */
+    .sideCard{
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.10));
+      margin-bottom: 12px;
+    }
+
+    .kv{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .kv:last-child{border-bottom:none;}
+    .kv b{color: var(--text); font-weight: 900;}
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      margin-top: 10px;
+      width: fit-content;
+    }
+
+    @media(max-width: 1100px){
+      .grid{grid-template-columns: 1fr;}
+      .chat{height: 420px;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div class="brandText">
+          <h1>Pregnancy Care AI</h1>
+          <p>Risk scoring • Gemini coaching • Emergency triage</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="statusPill">
+          <div class="dot"></div>
+          <span>Assistant Online</span>
+        </div>
+
+        <select id="patientId" class="select" aria-label="Select patient"></select>
+        <button class="btn" onclick="loadPatients()">↻ Patients</button>
+        <button class="btn" onclick="refreshRisk()">📊 Refresh Risk</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- MAIN CHAT PANEL -->
+      <div class="panel">
+        <div class="sectionTitle">
+          <h2>Smart Pregnancy Assistant Chat</h2>
+          <span class="miniLabel" id="modelInfo">Model: Auto-latest</span>
+        </div>
+
+        <div class="riskRow">
+          <div class="riskCard">
+            <div class="riskTop">
+              <span>🩺 Preeclampsia Risk</span>
+              <span class="tier" id="peTier">--</span>
+            </div>
+            <div class="progress"><div class="bar" id="peBar"></div></div>
+            <div class="riskMeta">
+              <span>Score: <b id="peScore">--</b></span>
+              <span id="peHint">--</span>
+            </div>
+          </div>
+
+          <div class="riskCard">
+            <div class="riskTop">
+              <span>👶 Macrosomia Risk</span>
+              <span class="tier" id="macTier">--</span>
+            </div>
+            <div class="progress"><div class="bar" id="macBar"></div></div>
+            <div class="riskMeta">
+              <span>Score: <b id="macScore">--</b></span>
+              <span id="macHint">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chatWrap">
+          <div class="chat" id="chat"></div>
+
+          <div class="chips">
+            <button class="chip" onclick="quickAsk('What is my current risk summary?')">Risk Summary</button>
+            <button class="chip" onclick="quickAsk('Give self-care advice for today.')">Self-care</button>
+            <button class="chip" onclick="quickAsk('Emergency warning signs I should watch for?')">Emergency Signs</button>
+            <button class="chip" onclick="quickAsk('Suggest diet changes to avoid glucose spikes.')">Diet Guidance</button>
+            <button class="chip" onclick="quickAsk('Explain my numbers in simple terms.')">Explain My Vitals</button>
+          </div>
+
+          <div class="composer">
+            <input id="msg" placeholder="Type your message… (e.g., I have swelling + headache)"/>
+            <button class="sendBtn" onclick="sendMsg()">Send ✨</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDEBAR -->
+      <div class="panel">
+        <div class="sectionTitle">
+          <h2>Patient Snapshot</h2>
+          <span class="miniLabel">Live context</span>
+        </div>
+
+        <div class="sideCard" id="snapshot">
+          <div class="kv"><span>Patient</span><b id="s_pid">--</b></div>
+          <div class="kv"><span>GA Weeks</span><b id="s_ga">--</b></div>
+          <div class="kv"><span>BP</span><b id="s_bp">--</b></div>
+          <div class="kv"><span>Proteinuria</span><b id="s_prot">--</b></div>
+          <div class="kv"><span>Glucose (F/1hr)</span><b id="s_glu">--</b></div>
+          <div class="kv"><span>Food Log</span><b id="s_food">--</b></div>
+
+          <div class="tag">📌 Tip: Click “Refresh Risk” anytime</div>
+        </div>
+
+        <div class="sectionTitle" style="margin-top:10px;">
+          <h2>Innovation Highlights</h2>
+          <span class="miniLabel">for viva</span>
+        </div>
+
+        <div class="sideCard">
+          <div class="kv"><span>Dual Risk Models</span><b>PE + Macrosomia</b></div>
+          <div class="kv"><span>Rule Tiering</span><b>Low/Med/High</b></div>
+          <div class="kv"><span>LLM Reasoning</span><b>Gemini Agent</b></div>
+          <div class="kv"><span>Workflow Ready</span><b>n8n Alerts</b></div>
+          <div class="kv"><span>Retrain Ready</span><b>Model Versioning</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function now(){ return new Date().toLocaleTimeString(); }
+
+function getPatientIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("patient_id");
+}
+
+function addMsg(role, text){
+  const chat = document.getElementById("chat");
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + role;
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = (role === "you") ? "YOU" : "AI";
+
+  const bubbleWrap = document.createElement("div");
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.textContent = now();
+
+  bubbleWrap.appendChild(bubble);
+  bubbleWrap.appendChild(meta);
+
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubbleWrap);
+
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addTyping(){
+  const chat = document.getElementById("chat");
+  const wrap = document.createElement("div");
+  wrap.className = "msg bot";
+  wrap.id = "typingBubble";
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = "AI";
+
+  const typing = document.createElement("div");
+  typing.className = "typing";
+  typing.innerHTML = `
+    <span style="font-weight:900;">Typing</span>
+    <span class="dot3"></span><span class="dot3"></span><span class="dot3"></span>
+  `;
+
+  wrap.appendChild(avatar);
+  wrap.appendChild(typing);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping(){
+  const t = document.getElementById("typingBubble");
+  if(t) t.remove();
+}
+
+function setTierStyle(el, tier){
+  el.textContent = tier || "--";
+  el.style.borderColor = "rgba(255,255,255,0.14)";
+  el.style.background = "rgba(255,255,255,0.06)";
+
+  if(tier === "high"){
+    el.style.borderColor = "rgba(255,70,70,0.55)";
+    el.style.background = "rgba(255,70,70,0.10)";
+  }
+  if(tier === "medium"){
+    el.style.borderColor = "rgba(255,190,60,0.55)";
+    el.style.background = "rgba(255,190,60,0.10)";
+  }
+  if(tier === "low"){
+    el.style.borderColor = "rgba(70,255,180,0.55)";
+    el.style.background = "rgba(70,255,180,0.10)";
+  }
+}
+
+function updateRiskUI(risk){
+  const pe = risk.preeclampsia_risk_score;
+  const mac = risk.macrosomia_risk_score;
+
+  document.getElementById("peScore").textContent = pe.toFixed(3);
+  document.getElementById("macScore").textContent = mac.toFixed(3);
+
+  setTierStyle(document.getElementById("peTier"), risk.preeclampsia_risk_tier);
+  setTierStyle(document.getElementById("macTier"), risk.macrosomia_risk_tier);
+
+  document.getElementById("peBar").style.width = (pe*100).toFixed(0) + "%";
+  document.getElementById("macBar").style.width = (mac*100).toFixed(0) + "%";
+
+  document.getElementById("peHint").textContent =
+    pe >= 0.7 ? "Emergency" : pe >= 0.4 ? "Monitor closely" : "Stable";
+
+  document.getElementById("macHint").textContent =
+    mac >= 0.7 ? "Reduce spikes" : mac >= 0.4 ? "Diet improvements" : "Stable";
+
+  const peModel = (risk.model_loaded?.preeclampsia_dir || "").split("\\").pop();
+  const macModel = (risk.model_loaded?.macrosomia_dir || "").split("\\").pop();
+  document.getElementById("modelInfo").textContent = `Models: ${peModel || "PE"} | ${macModel || "MAC"}`;
+}
+
+function setSnapshot(patientId, data){
+  document.getElementById("s_pid").textContent = patientId || "--";
+  document.getElementById("s_ga").textContent = (data.gestational_age_weeks ?? "--");
+  const bp = (data.systolic_bp && data.diastolic_bp) ? `${data.systolic_bp}/${data.diastolic_bp}` : "--";
+  document.getElementById("s_bp").textContent = bp;
+  document.getElementById("s_prot").textContent = (data.proteinuria_dipstick ?? "--");
+  const glu = (data.fasting_glucose && data.postprandial_1hr_glucose) ?
+    `${data.fasting_glucose}/${data.postprandial_1hr_glucose}` : "--";
+  document.getElementById("s_glu").textContent = glu;
+  document.getElementById("s_food").textContent = (data.food_log_text ?? "--");
+}
+
+async function loadPatients(){
+  const sel = document.getElementById("patientId");
+  sel.innerHTML = "";
+
+  const res = await fetch("/patients");
+  const data = await res.json();
+  const list = data.patients || [];
+
+  if(list.length === 0){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No Patients (predict first)";
+    sel.appendChild(opt);
+    return;
+  }
+
+  list.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    sel.appendChild(opt);
+  });
+}
+
+function getPid(){
+  const pid = document.getElementById("patientId").value;
+  if(!pid){
+    alert("No patient found. First call /predict_risk from Swagger or your script to store patient data.");
+    throw new Error("Missing patient_id");
+  }
+  return pid;
+}
+
+async function refreshRisk(){
+  const pid = getPid();
+
+  const res = await fetch("/patient/" + pid);
+  const data = await res.json();
+
+  if(data.status !== "ok"){
+    alert(data.message || "Patient not found");
+    return;
+  }
+
+  setSnapshot(pid, data.patient_data);
+  updateRiskUI(data.risk);
+}
+
+async function sendMsg(){
+  const pid = getPid();
+  const text = document.getElementById("msg").value.trim();
+  if(!text) return;
+
+  addMsg("you", text);
+  document.getElementById("msg").value = "";
+  addTyping();
+
+  try{
+    const res = await fetch("/chat_api", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({patient_id: pid, message: text})
+    });
+
+    const data = await res.json();
+    removeTyping();
+    addMsg("bot", data.reply || "No reply");
+
+  } catch(e){
+    removeTyping();
+    addMsg("bot", "❌ Backend error. Check FastAPI logs.");
+  }
+}
+
+function quickAsk(t){
+  document.getElementById("msg").value = t;
+  sendMsg();
+}
+
+addMsg("bot", "Hi! I’m your Pregnancy Care AI assistant. Click Refresh Risk, then ask your questions.");
+(async function init(){
+  await loadPatients();
+
+  const pidFromUrl = getPatientIdFromUrl();
+
+  // ✅ If patient_id is present in URL:
+  if(pidFromUrl){
+    const sel = document.getElementById("patientId");
+
+    // set dropdown value if it exists
+    sel.value = pidFromUrl;
+
+    // ✅ optionally lock it so patient can't change
+    sel.disabled = true;
+
+    // ✅ auto refresh risk
+    try{
+      await refreshRisk();
+    }catch(e){
+      addMsg("bot", "⚠️ Patient record not found yet. Please wait for the next update.");
+    }
+
+    addMsg("bot", `Hi! I loaded your profile (${pidFromUrl}). Ask me anything about your risk and health today.`);
+  } else {
+    // no patient_id in URL → normal mode
+    addMsg("bot", "Hi! Please select a patient and click Refresh Risk.");
+  }
+})();
+
+</script>
+</body>
+</html>

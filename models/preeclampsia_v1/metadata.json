@@ -1,0 +1,14 @@
+{
+    "model_name": "preeclampsia_risk_score_lgbm",
+    "version": "v1",
+    "target": "preeclampsia_risk_score_label",
+    "train_rows": 4034,
+    "test_rows": 966,
+    "feature_count": 16,
+    "tier_thresholds": {
+        "low_max": 0.399,
+        "medium_max": 0.699,
+        "high_min": 0.7
+    },
+    "notes": "Patient-wise split + engineered clinical features + early stopping to reduce overfitting."
+}

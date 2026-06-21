@@ -1,0 +1,19 @@
+[
+    "gestational_age_weeks",
+    "maternal_age",
+    "fasting_glucose",
+    "postprandial_1hr_glucose",
+    "gdm_diagnosed",
+    "hba1c",
+    "pre_pregnancy_bmi",
+    "weight_kg",
+    "post_meal_walk_minutes",
+    "sleep_hours",
+    "meal_category_encoded",
+    "glucose_spike",
+    "fasting_above_target_flag",
+    "postmeal_above_target_flag",
+    "high_spike_flag",
+    "weight_missing",
+    "hba1c_missing"
+]

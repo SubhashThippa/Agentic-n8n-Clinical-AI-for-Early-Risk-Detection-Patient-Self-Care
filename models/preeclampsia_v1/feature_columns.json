@@ -1,0 +1,18 @@
+[
+    "gestational_age_weeks",
+    "maternal_age",
+    "systolic_bp",
+    "diastolic_bp",
+    "severe_headache",
+    "vision_changes",
+    "upper_abdominal_pain",
+    "swelling_face_hands",
+    "proteinuria_dipstick",
+    "weight_kg",
+    "pulse_pressure",
+    "map",
+    "symptom_sum",
+    "bp_severe_flag",
+    "proteinuria_missing",
+    "weight_missing"
+]

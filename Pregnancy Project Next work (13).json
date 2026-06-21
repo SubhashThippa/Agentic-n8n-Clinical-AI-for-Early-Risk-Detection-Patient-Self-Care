@@ -1,0 +1,3047 @@
+{
+  "name": "Pregnancy Project Next work",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1536,
+        160
+      ],
+      "id": "a920a6cc-ed87-4663-b21f-0e7284cb30f5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Pregnancy Clinical Assistant AI.\n\nThe patient details input JSON is:\n{{ JSON.stringify($json.patient_data ?? $json) }}\n\nThe following medical knowledge excerpts were retrieved from trusted obstetric literature (ACOG guidelines, peer-reviewed journals, and clinical obstetrics references):\n\nMEDICAL KNOWLEDGE CONTEXT:\n{{ ($json.retrieved_chunks ?? []).join(\"\\n\\n\") }}\n\nYou MUST use this medical knowledge only as supporting clinical guidance when interpreting the patient data.\n\nYou will analyze BOTH conditions:\n\n1. Preeclampsia risk (emergency triage)\n2. Macrosomia risk (GDM coaching + prevention)\n\n========================================\nCRITICAL INPUT RULES (NO HALLUCINATION)\n=======================================\n\n1. You MUST use ONLY:\n   • the input patient JSON\n   • the retrieved medical knowledge context\n\n2. DO NOT invent, assume, guess, or modify any numbers:\n\n   * BP\n   * glucose values\n   * HbA1c\n   * proteinuria\n   * symptoms\n   * gestational age\n   * BMI\n   * model risk scores\n\n3. The output patient_id MUST exactly equal the input patient_id.\n\n4. If any field is missing/null, mention it as \"missing\" in the assessment text.\n\n5. proteinuria_dipstick is numeric scale 0–3 (NO + sign).\n\n6. NEVER add new patient name, gender, or identity information.\n\n7. If the medical knowledge context conflicts with the patient data, ALWAYS prioritize the patient data.\n\n8. Output MUST be strictly valid JSON (no markdown, no ```json fences).\n\n========================================\nOUTPUT MUST PRESERVE FULL INPUT JSON\n====================================\n\nVERY IMPORTANT:\n\nYour output MUST include ALL original input fields exactly as received.\n\nDO NOT drop any input keys.\nDO NOT rename any input keys.\nDO NOT change the values of input keys.\n\nYou are allowed to ADD new analysis fields on top of the existing fields.\n\nSo the output JSON MUST contain:\n\n• all keys from the patient input (complete vitals + model scores)\nPLUS\n• the AI-generated clinical analysis keys listed below.\n\n========================================\nDECISION LOGIC (MUST FOLLOW TIERS)\n==================================\n\nYou MUST follow the ML risk tiers from the input.\n\nIf preeclampsia_risk_tier == \"high\":\n\nrecommended_action = \"EMERGENCY\"\nsend_alert = true\nalert_target = \"hospital\"\n\nElse if preeclampsia_risk_tier == \"medium\":\n\nrecommended_action = \"ALERT_DOCTOR\"\nsend_alert = true\nalert_target = \"doctor\"\n\nElse if macrosomia_risk_tier == \"high\":\n\nrecommended_action = \"COACH_PATIENT\"\nsend_alert = false\nalert_target = \"none\"\n\nElse:\n\nrecommended_action = \"LOG_ONLY\"\nsend_alert = false\nalert_target = \"none\"\n\n========================================\nCLINICAL REASONING GUIDELINES\n=============================\n\nUse the medical knowledge context when explaining your reasoning.\n\nFor example you may reference:\n\n• Hypertension ≥140/90 mmHg in pregnancy\n• Severe hypertension ≥160/110 mmHg\n• Proteinuria thresholds for preeclampsia\n• Glucose targets in pregnancy\n• Lifestyle interventions for GDM\n\nOnly reference information that appears in the retrieved_chunks context.\n\nDo NOT introduce new clinical rules not present in the provided context.\n\n========================================\nRESPONSE QUALITY REQUIREMENTS\n=============================\n\n• Do NOT diagnose diseases.\n• Provide risk-based clinical guidance only.\n• Be clear, professional, and clinically safe.\n• Keep the summary short but meaningful.\n• Preeclampsia is always higher urgency than macrosomia.\n\nDoctor message must include:\n• risk tiers\n• key vitals (from input only)\n• relevant symptoms\n• gestational age\n\nPatient message must be:\n• calm\n• supportive\n• actionable\n\n========================================\nSTRICT OUTPUT FORMAT (MERGED JSON)\n==================================\n\nReturn ONLY ONE valid JSON object.\n\nFIRST include ALL INPUT fields exactly as received.\n\nTHEN include these additional keys (exact same names):\n\n{\n...ALL_INPUT_FIELDS_HERE,\n\n\"summary\": \"...\",\n\"preeclampsia_assessment\": \"...\",\n\"macrosomia_assessment\": \"...\",\n\n\"recommended_action\": \"LOG_ONLY | COACH_PATIENT | ALERT_DOCTOR | EMERGENCY\",\n\n\"send_alert\": true/false,\n\"alert_target\": \"none | caretaker | doctor | hospital\",\n\n\"patient_message\": \"...\",\n\"doctor_message\": \"...\",\n\n\"next_monitoring_time\": \"...\",\n\n\"confidence\": 0.0-1.0\n}\n\nFINAL OUTPUT RULES\n\n• DO NOT wrap the JSON with markdown.\n• DO NOT output an array.\n• DO NOT output explanations.\n• DO NOT create nested objects like \"agent_output\".\n\nReturn the final JSON object only.\n\n\nThe system validates your output using clinical safety guardrails.\nIf validation fails, your output may be regenerated.\n\nTherefore ensure:\n• strict JSON format\n• all required fields\n• correct recommended_action\n• consistent reasoning with risk tiers.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        192
+      ],
+      "id": "d481c9ae-2265-4c4d-b84d-f11734304fdd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        416
+      ],
+      "id": "157ffefd-aa96-4dc4-84e5-4b070c74a73e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dvxUV5dQy3EGTJGR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output ?? \"\";\n\nlet t = String(raw).trim();\n\n// Remove markdown fences if Gemini adds them\nt = t.replace(/^```json/i, \"\").replace(/^```/i, \"\").replace(/```$/i, \"\").trim();\n\n// Extract first JSON object if extra text is present\nconst firstBrace = t.indexOf(\"{\");\nconst lastBrace = t.lastIndexOf(\"}\");\nif (firstBrace !== -1 && lastBrace !== -1) {\n  t = t.slice(firstBrace, lastBrace + 1);\n}\n\nlet obj;\ntry {\n  obj = JSON.parse(t);\n} catch (e) {\n  throw new Error(\"Agent output not valid JSON. Raw output:\\n\" + raw);\n}\n\nreturn [{ json: obj }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        192
+      ],
+      "id": "7a24e32b-4c40-49be-8f87-be3cdcf5229e",
+      "name": "Parsing"
+    },
+    {
+      "parameters": {
+        "path": "ack",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        944
+      ],
+      "id": "0da0f833-744f-444f-b6c8-6e6abf7f7a88",
+      "name": "Acknowledge Webhook",
+      "webhookId": "0c28a4b7-f300-4d5c-8ed4-cc3f2930a29d",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "path": "false",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        1104
+      ],
+      "id": "5024104e-01c0-4062-b26c-2b84a26c5862",
+      "name": "FalseAlert Webhook",
+      "webhookId": "ebf6e0ae-ccc2-42e3-ba3e-a865a5508d98",
+      "alwaysOutputData": false,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ Preprocess Node (Model-Ready Payload)\n// Output schema matches FastAPI /predict_risk exactly\n// Handles unusual/impossible values via validation + clamping + fallbacks\n\nfunction num(x) {\n  if (x === null || x === undefined || x === \"\") return null;\n  const n = Number(x);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction int01(x) {\n  // normalize boolean / yes/no / 0/1 / \"true\"/\"false\"\n  if (x === true) return 1;\n  if (x === false) return 0;\n  if (x === null || x === undefined || x === \"\") return 0;\n\n  const s = String(x).trim().toLowerCase();\n  if ([\"1\", \"yes\", \"y\", \"true\"].includes(s)) return 1;\n  if ([\"0\", \"no\", \"n\", \"false\"].includes(s)) return 0;\n\n  const n = Number(s);\n  return n === 1 ? 1 : 0;\n}\n\nfunction text(x) {\n  if (x === null || x === undefined) return \"\";\n  return String(x).trim();\n}\n\nfunction clamp(n, lo, hi) {\n  if (n === null) return null;\n  return Math.max(lo, Math.min(hi, n));\n}\n\nfunction safeDipstick(x) {\n  // Our model expects proteinuria_dipstick numeric 0–3\n  // Accepts: 0, 0.5, 1, 2, 3, \"trace\", \"1+\", \"2+\", \"3+\", \"+\"\n  if (x === null || x === undefined || x === \"\") return null;\n\n  // numeric already\n  const n = Number(x);\n  if (Number.isFinite(n)) {\n    // clamp strictly to 0..3\n    return clamp(n, 0, 3);\n  }\n\n  // string mapping\n  const s = String(x).trim().toLowerCase();\n  if (s === \"negative\" || s === \"neg\" || s === \"0\") return 0;\n  if (s === \"trace\") return 0.5;\n  if (s === \"+\" || s === \"1+\") return 1;\n  if (s === \"2+\") return 2;\n  if (s === \"3+\") return 3;\n\n  // unknown string\n  return null;\n}\n\n// --------------------------------------\n// ✅ INPUT (raw from test case OR multi-source merge)\n// --------------------------------------\nconst raw = $input.first().json;\n\n// --------------------------------------\n// ✅ Output EXACT schema expected by FastAPI /predict_risk\n// (matching PatientData in backend)\n// --------------------------------------\nconst out = {\n  patient_id: text(raw.patient_id || \"UNKNOWN\"),\n\n  timestamp: raw.timestamp ? String(raw.timestamp) : new Date().toISOString(),\n\n  gestational_age_weeks: clamp(num(raw.gestational_age_weeks), 5, 45),\n  maternal_age: clamp(num(raw.maternal_age), 14, 55),\n  pre_pregnancy_bmi: clamp(num(raw.pre_pregnancy_bmi), 10, 70),\n  gdm_diagnosed: int01(raw.gdm_diagnosed),\n\n  // ✅ Preeclampsia vitals\n  systolic_bp: clamp(num(raw.systolic_bp), 70, 220),\n  diastolic_bp: clamp(num(raw.diastolic_bp), 40, 140),\n\n  severe_headache: int01(raw.severe_headache),\n  vision_changes: int01(raw.vision_changes),\n  upper_abdominal_pain: int01(raw.upper_abdominal_pain),\n  swelling_face_hands: int01(raw.swelling_face_hands),\n\n  proteinuria_dipstick: safeDipstick(raw.proteinuria_dipstick),\n\n  // ✅ Macrosomia/GDM vitals + behavior\n  fasting_glucose: clamp(num(raw.fasting_glucose), 40, 300),\n  postprandial_1hr_glucose: clamp(num(raw.postprandial_1hr_glucose), 40, 350),\n\n  post_meal_walk_minutes: clamp(num(raw.post_meal_walk_minutes), 0, 180),\n  sleep_hours: clamp(num(raw.sleep_hours), 0, 16),\n\n  // ✅ periodic/manual\n  weight_kg: clamp(num(raw.weight_kg), 30, 250),\n  hba1c: clamp(num(raw.hba1c), 3.0, 12.0),\n\n  // ✅ text\n  food_log_text: text(raw.food_log_text)\n};\n\n// --------------------------------------\n// ✅ Impossible-value correction rules (strong demo point)\n// --------------------------------------\n\n// 1) If diastolic > systolic (impossible) -> swap\nif (out.systolic_bp !== null && out.diastolic_bp !== null) {\n  if (out.diastolic_bp > out.systolic_bp) {\n    const temp = out.systolic_bp;\n    out.systolic_bp = out.diastolic_bp;\n    out.diastolic_bp = temp;\n  }\n}\n\n// 2) Gestational age unrealistic -> set null (not clamp)\n// because if someone enters 120 weeks it's garbage\nif (out.gestational_age_weeks !== null && (out.gestational_age_weeks < 10 || out.gestational_age_weeks > 45)) {\n  out.gestational_age_weeks = null;\n}\n\n// 3) Negative glucose or sleep should be null\nif (out.fasting_glucose !== null && out.fasting_glucose < 0) out.fasting_glucose = null;\nif (out.postprandial_1hr_glucose !== null && out.postprandial_1hr_glucose < 0) out.postprandial_1hr_glucose = null;\nif (out.sleep_hours !== null && out.sleep_hours < 0) out.sleep_hours = null;\n\n// 4) If postprandial is less than fasting by huge margin, keep but flag using metadata (optional)\nconst flags = [];\n\nif (!out.patient_id || out.patient_id === \"UNKNOWN\") flags.push(\"missing_patient_id\");\nif (out.systolic_bp === null || out.diastolic_bp === null) flags.push(\"missing_bp\");\nif (out.fasting_glucose === null || out.postprandial_1hr_glucose === null) flags.push(\"missing_glucose\");\nif (out.proteinuria_dipstick === null) flags.push(\"missing_proteinuria\");\nif (out.food_log_text === \"\") flags.push(\"missing_food_log\");\n\nif (out.systolic_bp !== null && out.diastolic_bp !== null) {\n  if (out.systolic_bp >= 160 || out.diastolic_bp >= 110) flags.push(\"severe_hypertension_flag\");\n  if (out.systolic_bp >= 140 || out.diastolic_bp >= 90) flags.push(\"hypertension_flag\");\n}\n\nif (out.postprandial_1hr_glucose !== null) {\n  if (out.postprandial_1hr_glucose >= 180) flags.push(\"high_post_meal_glucose_flag\");\n  else if (out.postprandial_1hr_glucose >= 140) flags.push(\"post_meal_glucose_above_target_flag\");\n}\n\nif (out.sleep_hours !== null && out.sleep_hours < 4) flags.push(\"low_sleep_flag\");\nif (out.post_meal_walk_minutes !== null && out.post_meal_walk_minutes === 0) flags.push(\"no_post_meal_walk_flag\");\n\n// --------------------------------------\n// ✅ Keep output strictly model-ready,\n// but attach extra metadata for n8n routing/logging\n// --------------------------------------\nreturn {\n  json: {\n    ...out,\n\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        176
+      ],
+      "id": "844ab53d-c703-4118-87fd-5538c4fdd029",
+      "name": "Preprocessing Node (Data Fusion, Cleaning, Imputation)"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -480,
+        128
+      ],
+      "id": "a351f161-6a14-4c99-97e0-ee83ead75c95",
+      "name": "Merger Node"
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "query": "SELECT\n  input1.*,\n  input2.preeclampsia_risk_score,\n  input2.preeclampsia_risk_tier,\n  input2.macrosomia_risk_score,\n  input2.macrosomia_risk_tier,\n  input2.model_loaded\nFROM input1\nLEFT JOIN input2\nON input1.patient_id = input2.patient_id\nAND input1.timestamp = input2.timestamp\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        272,
+        192
+      ],
+      "id": "3a792e9c-6b03-4147-9036-4d114b19b3dd",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8001/predict_risk",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        176
+      ],
+      "id": "7910ce2a-6f2e-461f-95fa-e686312feb76",
+      "name": "ML Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const pe = item.json.pe_label;\n  const macro = item.json.macro_label;\n\n  return (\n    pe !== undefined && pe !== \"\" &&\n    macro !== undefined && macro !== \"\"\n  );\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        1008
+      ],
+      "id": "ac0043cf-d7f1-443d-9cc4-53f9f7ed9775",
+      "name": "Label Mapping"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        1008
+      ],
+      "id": "0fd6a4ef-a355-4d98-b679-c278f05fb811",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8001/retrain_models",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2592,
+        1008
+      ],
+      "id": "5fa93b71-5374-4c58-8fac-02d7e9e970ba",
+      "name": "Re-train Request"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function randInt(min, max) {\n  return Math.floor(Math.random() * (max - min + 1)) + min;\n}\n\nfunction randFloat(min, max, decimals = 1) {\n  const v = Math.random() * (max - min) + min;\n  return Number(v.toFixed(decimals));\n}\n\nconst patient_id = \"P\" + String(randInt(1, 9999)).padStart(4, \"0\");\n\nreturn {\n  json: {\n    patient_id,\n    maternal_age: randInt(18, 40),\n    pre_pregnancy_bmi: randFloat(18, 40, 1),\n    gdm_diagnosed: Math.random() < 0.35 ? 1 : 0\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        -272
+      ],
+      "id": "d77f5150-2937-4b3c-b50c-5b6feb841b92",
+      "name": "Patient Profile Source"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function randInt(min, max) {\n  return Math.floor(Math.random() * (max - min + 1)) + min;\n}\n\nfunction randFloat(min, max, decimals = 1) {\n  const v = Math.random() * (max - min) + min;\n  return Number(v.toFixed(decimals));\n}\n\nconst gestational_age_weeks = randInt(20, 40);\n\n// BP baseline\nlet systolic_bp = randInt(100, 145);\nlet diastolic_bp = randInt(60, 95);\n\n// Rare severe PE spike\nif (Math.random() < 0.12) {\n  systolic_bp = randInt(150, 175);\n  diastolic_bp = randInt(95, 115);\n}\n\n// Glucose baseline\nlet fasting_glucose = randInt(70, 95);\nlet postprandial_1hr_glucose = randInt(90, 140);\n\n// some random high glucose spikes\nif (Math.random() < 0.20) {\n  fasting_glucose = randInt(90, 120);\n  postprandial_1hr_glucose = randInt(140, 200);\n}\n\nreturn {\n  json: {\n    timestamp: new Date().toISOString(),\n    gestational_age_weeks,\n\n    systolic_bp,\n    diastolic_bp,\n\n    fasting_glucose,\n    postprandial_1hr_glucose,\n\n    post_meal_walk_minutes: randInt(0, 30),\n    sleep_hours: randFloat(4.5, 9.0, 1)\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        -96
+      ],
+      "id": "7ec590c3-0f21-454a-834b-0e3c4ef91772",
+      "name": "Live Vitals Source"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function pickWeighted(probTrue) {\n  return Math.random() < probTrue ? 1 : 0;\n}\n\n// simulate symptom check-in\n// baseline low probability symptoms\nconst severe_headache = pickWeighted(0.10);\nconst vision_changes = pickWeighted(0.05);\nconst upper_abdominal_pain = pickWeighted(0.05);\nconst swelling_face_hands = pickWeighted(0.18);\n\nreturn {\n  json: {\n    severe_headache,\n    vision_changes,\n    upper_abdominal_pain,\n    swelling_face_hands\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        80
+      ],
+      "id": "6ae58e28-a45e-438f-b7e7-44fa99ba6477",
+      "name": "Symptoms Check-In Source"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function randFloat(min, max, decimals = 1) {\n  const v = Math.random() * (max - min) + min;\n  return Number(v.toFixed(decimals));\n}\n\nfunction pick(arr) {\n  return arr[Math.floor(Math.random() * arr.length)];\n}\n\n// Proteinuria dipstick numeric: 0,1,2,3\nconst proteinuria_dipstick = pick([0, 0, 0, 1, 1, 2, 3]);\n\n// HbA1c periodic lab\nconst hba1c = randFloat(4.8, 7.2, 1);\n\n// Weight periodic/manual\nconst weight_kg = randFloat(45, 100, 1);\n\nreturn {\n  json: {\n    proteinuria_dipstick,\n    hba1c,\n    weight_kg\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        272
+      ],
+      "id": "c35773f4-12d7-4faf-932f-4b364e2205cb",
+      "name": "Labs Source"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function pick(arr) {\n  return arr[Math.floor(Math.random() * arr.length)];\n}\n\nconst food_log_text = pick([\n  \"Ate brown rice + dal + vegetables\",\n  \"Had a bagel and orange juice\",\n  \"Ate idli and sambar\",\n  \"Had pasta and dessert\",\n  \"Ate salad + grilled chicken\",\n  \"Had chapati + paneer curry\",\n  \"Had fried snacks and soda\",\n  \"Had fruits and milkshake\"\n]);\n\nreturn {\n  json: { food_log_text }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        464
+      ],
+      "id": "6d7a1121-909b-4dae-862d-075fbdb67d08",
+      "name": "Food Log Source"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ✅ Single Test Case Generator (One run = One patient payload)\n// Change TEST_CASE value to switch test case.\n\nconst TEST_CASE = \"MED_MED\"; \n// Options:\n// \"LOW_LOW\"\n// \"MED_MED\"\n// \"HIGH_HIGH\"\n// \"HIGH_PE_LOW_MAC\"\n// \"LOW_PE_HIGH_MAC\"\n// \"MED_PE_HIGH_MAC\"\n// \"HIGH_PE_MED_MAC\"\n// \"MED_PE_LOW_MAC\"\n\nconst now = new Date().toISOString();\n\nconst cases = {\n  LOW_LOW: {\n    patient_id: \"TEST_LOW_LOW\",\n    timestamp: now,\n    gestational_age_weeks: 28,\n    maternal_age: 26,\n    pre_pregnancy_bmi: 22.5,\n    gdm_diagnosed: 0,\n\n    systolic_bp: 118,\n    diastolic_bp: 76,\n    proteinuria_dipstick: 0,\n    severe_headache: 0,\n    vision_changes: 0,\n    upper_abdominal_pain: 0,\n    swelling_face_hands: 0,\n\n    fasting_glucose: 86,\n    postprandial_1hr_glucose: 124,\n    post_meal_walk_minutes: 20,\n    sleep_hours: 7.5,\n\n    weight_kg: 64,\n    hba1c: 5.3,\n    food_log_text: \"Chapati + dal + vegetables\"\n  },\n\n  MED_MED: {\n  patient_id: \"TEST_MED_MED\",\n  timestamp: now,\n  gestational_age_weeks: 32,\n  maternal_age: 38,\n  pre_pregnancy_bmi: 42.4,\n  gdm_diagnosed: 0,\n\n  systolic_bp: 142,\n  diastolic_bp: 79,\n  severe_headache: 0,\n  vision_changes: 0,\n  upper_abdominal_pain: 0,\n  swelling_face_hands: 0,\n  proteinuria_dipstick: 1,\n\n  fasting_glucose: 99,\n  postprandial_1hr_glucose: 126,\n  food_log_text: \"paneer salad\",\n\n  post_meal_walk_minutes: 29,\n  sleep_hours: 6.1,\n\n  weight_kg: 113.7,\n  hba1c: 5.6\n},\n\n\n  HIGH_HIGH: {\n    patient_id: \"TEST_HIGH_HIGH\",\n    timestamp: now,\n    gestational_age_weeks: 34,\n    maternal_age: 33,\n    pre_pregnancy_bmi: 34.0,\n    gdm_diagnosed: 1,\n\n    systolic_bp: 165,\n    diastolic_bp: 112,\n    proteinuria_dipstick: 3,\n    severe_headache: 1,\n    vision_changes: 1,\n    upper_abdominal_pain: 1,\n    swelling_face_hands: 1,\n\n    fasting_glucose: 118,\n    postprandial_1hr_glucose: 195,\n    post_meal_walk_minutes: 0,\n    sleep_hours: 4.8,\n\n    weight_kg: 92,\n    hba1c: 6.6,\n    food_log_text: \"Had a bagel, orange juice, and dessert\"\n  },\n\n  HIGH_PE_LOW_MAC: {\n    patient_id: \"TEST_HIGH_PE_LOW_MAC\",\n    timestamp: now,\n    gestational_age_weeks: 36,\n    maternal_age: 28,\n    pre_pregnancy_bmi: 25.0,\n    gdm_diagnosed: 0,\n\n    systolic_bp: 162,\n    diastolic_bp: 110,\n    proteinuria_dipstick: 2,\n    severe_headache: 1,\n    vision_changes: 1,\n    upper_abdominal_pain: 0,\n    swelling_face_hands: 1,\n\n    fasting_glucose: 88,\n    postprandial_1hr_glucose: 130,\n    post_meal_walk_minutes: 15,\n    sleep_hours: 7.2,\n\n    weight_kg: 74,\n    hba1c: 5.4,\n    food_log_text: \"Ate salad + grilled chicken\"\n  },\n\n  LOW_PE_HIGH_MAC: {\n    patient_id: \"TEST_LOW_PE_HIGH_MAC\",\n    timestamp: now,\n    gestational_age_weeks: 30,\n    maternal_age: 27,\n    pre_pregnancy_bmi: 33.0,\n    gdm_diagnosed: 1,\n\n    systolic_bp: 122,\n    diastolic_bp: 78,\n    proteinuria_dipstick: 0,\n    severe_headache: 0,\n    vision_changes: 0,\n    upper_abdominal_pain: 0,\n    swelling_face_hands: 0,\n\n    fasting_glucose: 112,\n    postprandial_1hr_glucose: 190,\n    post_meal_walk_minutes: 2,\n    sleep_hours: 5.4,\n\n    weight_kg: 88,\n    hba1c: 6.5,\n    food_log_text: \"Had pasta and dessert\"\n  },\n\n  MED_PE_HIGH_MAC: {\n    patient_id: \"TEST_MED_PE_HIGH_MAC\",\n    timestamp: now,\n    gestational_age_weeks: 33,\n    maternal_age: 31,\n    pre_pregnancy_bmi: 31.0,\n    gdm_diagnosed: 1,\n\n    systolic_bp: 150,\n    diastolic_bp: 98,\n    proteinuria_dipstick: 1,\n    severe_headache: 0,\n    vision_changes: 0,\n    upper_abdominal_pain: 0,\n    swelling_face_hands: 1,\n\n    fasting_glucose: 108,\n    postprandial_1hr_glucose: 182,\n    post_meal_walk_minutes: 5,\n    sleep_hours: 5.8,\n\n    weight_kg: 86,\n    hba1c: 6.3,\n    food_log_text: \"Had bagel and juice\"\n  },\n\n  HIGH_PE_MED_MAC: {\n    patient_id: \"TEST_HIGH_PE_MED_MAC\",\n    timestamp: now,\n    gestational_age_weeks: 35,\n    maternal_age: 34,\n    pre_pregnancy_bmi: 29.0,\n    gdm_diagnosed: 1,\n\n    systolic_bp: 160,\n    diastolic_bp: 110,\n    proteinuria_dipstick: 2,\n    severe_headache: 1,\n    vision_changes: 0,\n    upper_abdominal_pain: 1,\n    swelling_face_hands: 1,\n\n    fasting_glucose: 98,\n    postprandial_1hr_glucose: 160,\n    post_meal_walk_minutes: 10,\n    sleep_hours: 6.0,\n\n    weight_kg: 84,\n    hba1c: 6.0,\n    food_log_text: \"Rice and curry\"\n  },\n\n  MED_PE_LOW_MAC: {\n    patient_id: \"TEST_MED_PE_LOW_MAC\",\n    timestamp: now,\n    gestational_age_weeks: 31,\n    maternal_age: 29,\n    pre_pregnancy_bmi: 26.5,\n    gdm_diagnosed: 0,\n\n    systolic_bp: 142,\n    diastolic_bp: 92,\n    proteinuria_dipstick: 1,\n    severe_headache: 0,\n    vision_changes: 0,\n    upper_abdominal_pain: 0,\n    swelling_face_hands: 1,\n\n    fasting_glucose: 89,\n    postprandial_1hr_glucose: 132,\n    post_meal_walk_minutes: 20,\n    sleep_hours: 7.0,\n\n    weight_kg: 72,\n    hba1c: 5.5,\n    food_log_text: \"Ate dal + vegetables\"\n  }\n};\n\nif (!cases[TEST_CASE]) {\n  throw new Error(\"Invalid TEST_CASE. Please select a valid option.\");\n}\n\nreturn { json: cases[TEST_CASE] };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        448
+      ],
+      "id": "80a77292-c072-4dc1-b0ef-fdd554f785c4",
+      "name": "Test Data"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action_type }}",
+                    "rightValue": "LOG_ONLY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f25c2f82-3933-4932-859c-ada6440ce5c3"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ecfd83b2-9d8f-40b0-a1c3-ac9e03f5f49d",
+                    "leftValue": "={{ $json.action_type }}",
+                    "rightValue": "ALERT_DOCTOR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "732bda3a-1c31-4228-b0a5-3876e1fe384b",
+                    "leftValue": "={{ $json.action_type }}",
+                    "rightValue": "EMERGENCY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3184,
+        160
+      ],
+      "id": "c3336ae3-52b8-4ff0-a7fa-dfc077872ed7",
+      "name": "Recommended Action"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $json;\n\nconst action = d.recommended_action;\n\n// map priority\nlet priority = \"low\";\nif (action === \"COACH_PATIENT\") priority = \"medium\";\nif (action === \"ALERT_DOCTOR\") priority = \"high\";\nif (action === \"EMERGENCY\") priority = \"critical\";\n\n// choose channels\nlet channels = [\"log\"];\nif (action === \"ALERT_DOCTOR\") channels = [\"whatsapp\", \"email\", \"log\"];\nif (action === \"EMERGENCY\") channels = [\"whatsapp\", \"sms\", \"email\", \"log\"];\n\nreturn {\n  json: {\n    patient_id: d.patient_id,\n    preeclampsia_risk_score: $json.preeclampsia_risk_score,\n    preeclampsia_risk_tier:$json.preeclampsia_risk_tier,\n    macrosomia_risk_score: $json.macrosomia_risk_score,\n    macrosomia_risk_tier: $json.macrosomia_risk_tier,\n    action_type: action,\n    priority,\n    channels,\n\n    patient_message: d.patient_message || \"\",\n    doctor_message: d.doctor_message || \"\",\n    emergency_message: (action === \"EMERGENCY\")\n      ? (d.patient_message || \"Emergency detected. Please seek medical help immediately.\")\n      : \"\",\n\n    next_monitoring_time: d.next_monitoring_time || \"unknown\",\n    confidence: d.confidence ?? null,\n\n    // Keep whole AI output also (for logging + retraining memory store)\n    agent_output: d,\n\n    meta: {\n      timestamp: new Date().toISOString(),\n      workflow_run_id: $execution.id\n    }\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        192
+      ],
+      "id": "ac367ef1-6b1b-482e-8919-899d5eb46d74",
+      "name": "Build_Action_Payload"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const pid = $json.patient_id;\n\n// ✅ Change this base URL depending on where you host it\n// For demo in same laptop: localhost\n// For public access: use ngrok / cloud domain\nconst BASE_CHAT_URL = \"https://overweening-makenna-gaddingly.ngrok-free.dev\";\n\nreturn {\n  json: {\n    ...$json,\n    chatbot_link: `${BASE_CHAT_URL}?patient_id=${encodeURIComponent(pid)}`\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4176,
+        -144
+      ],
+      "id": "b89b0455-3c83-4391-be6b-8328cffe495d",
+      "name": "Generate_Chatbot_Link"
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "query": "SELECT\n  input1.*,\n  input2.*\nFROM input1\nLEFT JOIN input2\nON input1.patient_id = input2.patient_id\nAND input1.timestamp = input2.timestamp\nLIMIT 1\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4416,
+        -80
+      ],
+      "id": "78e137b3-afba-4753-9067-f4aebcd98f5c",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3648,
+        16
+      ],
+      "id": "77fcbc47-0b98-494e-9116-af0bae9f4793",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dvxUV5dQy3EGTJGR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are “Pregnancy Self-Care & Nutrition Coach AI”.\nYour job is to generate patient-friendly educational content for a PDF report.\n\nINPUT_JSON:\n{{ JSON.stringify($json) }}\n\nYou will receive one object called INPUT_JSON which contains:\n- patient vitals and symptoms\n- lab values (if available)\n- food_log_text\n- model risk scores and tiers for:\n  (1) preeclampsia risk\n  (2) macrosomia risk\n\nCRITICAL RULES (MUST FOLLOW):\n1) Use ONLY the values inside INPUT_JSON. Do NOT invent names, weeks, numbers, or symptoms.\n2) Do NOT diagnose. This is a risk-support education summary only.\n3) Do NOT give medication advice.\n4) Include safety warning signs (red flags) especially for preeclampsia.\n5) Create a personalized meal plan and daily routine based on:\n   - macrosomia_risk_tier\n   - glucose values\n   - food_log_text\n   - post_meal_walk_minutes\n   - sleep_hours\n6) Provide realistic, safe lifestyle advice suitable for pregnancy.\n7) Output MUST be valid JSON only. No markdown. No code fences.\n\nOUTPUT JSON STRUCTURE (return exactly this):\n\n{\n  \"patient_id\": \"...\",\n  \"report_title\": \"Personalized Pregnancy Self-Care Plan\",\n  \"risk_summary_simple\": {\n    \"preeclampsia_tier\": \"...\",\n    \"preeclampsia_score\": 0.0,\n    \"macrosomia_tier\": \"...\",\n    \"macrosomia_score\": 0.0,\n    \"one_line_summary\": \"...\"\n  },\n  \"today_focus\": [\n    \"...\"\n  ],\n  \"diet_plan\": {\n    \"goal\": \"...\",\n    \"breakfast_options\": [\"...\", \"...\", \"...\"],\n    \"lunch_options\": [\"...\", \"...\", \"...\"],\n    \"dinner_options\": [\"...\", \"...\", \"...\"],\n    \"snack_options\": [\"...\", \"...\"],\n    \"avoid_or_limit\": [\"...\", \"...\", \"...\"],\n    \"hydration_tip\": \"...\"\n  },\n  \"activity_plan\": {\n    \"recommended_walk_minutes\": \"...\",\n    \"post_meal_walk_tip\": \"...\",\n    \"safe_activity_note\": \"...\"\n  },\n  \"sleep_plan\": {\n    \"sleep_target_hours\": \"7-9\",\n    \"sleep_tip\": \"...\"\n  },\n  \"blood_pressure_safety\": {\n    \"monitoring_tip\": \"...\",\n    \"red_flags\": [\"...\", \"...\", \"...\", \"...\"],\n    \"what_to_do_if_red_flags\": \"...\"\n  },\n  \"glucose_safety\": {\n    \"monitoring_tip\": \"...\",\n    \"food_log_comment\": \"...\",\n    \"simple_swap_suggestions\": [\"...\", \"...\"]\n  },\n  \"daily_checklist\": [\n    \"...\"\n  ],\n  \"next_steps\": [\n    \"...\"\n  ],\n  \"chatbot_link_label\": \"Need more help? Use your AI Assistant link:\",\n  \"chatbot_link\": \"\"\n}\n\nIMPORTANT:\n- chatbot_link MUST be left as empty string \"\" (workflow will fill it later).\n- Keep advice short, simple, supportive, and pregnancy-safe.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        3648,
+        -144
+      ],
+      "id": "b4ac132c-812d-4ef9-ba9f-74b72cb919f6",
+      "name": "Patient PDF Content Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output ?? \"\";\n\nlet t = String(raw).trim();\n\n// Remove markdown fences if Gemini adds them\nt = t.replace(/^```json/i, \"\").replace(/^```/i, \"\").replace(/```$/i, \"\").trim();\n\n// Extract first JSON object if extra text is present\nconst firstBrace = t.indexOf(\"{\");\nconst lastBrace = t.lastIndexOf(\"}\");\nif (firstBrace !== -1 && lastBrace !== -1) {\n  t = t.slice(firstBrace, lastBrace + 1);\n}\n\nlet obj;\ntry {\n  obj = JSON.parse(t);\n} catch (e) {\n  throw new Error(\"Agent output not valid JSON. Raw output:\\n\" + raw);\n}\n\nreturn [{ json: obj }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        -144
+      ],
+      "id": "083dc300-09cf-47ad-a6cc-15b09ad57ade",
+      "name": "Parsing1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $input.all();\n\nif (!all.length) return [];\n\nreturn [\n  {\n    json: all[0].json\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4592,
+        -80
+      ],
+      "id": "8ea2f0eb-5128-4153-be01-c2d23bce8515",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8001/generate_patient_pdf",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "=patient_pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4784,
+        -80
+      ],
+      "id": "0e406d46-1fb2-41e4-b7d4-3b3d08dfec88",
+      "name": "Patient PDF generator"
+    },
+    {
+      "parameters": {
+        "sendTo": "subhashthippa1248@gmail.com",
+        "subject": "=Your Pregnancy Risk Summary + Self-Care Tips ✅",
+        "message": "=<div style=\"font-family: Arial, sans-serif; background:#f6f9fc; padding:20px;\">\n  <div style=\"max-width:650px; margin:auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.08);\">\n\n    <!-- Header -->\n    <div style=\"background:linear-gradient(90deg,#7c3aed,#2563eb); color:white; padding:18px 22px;\">\n      <h2 style=\"margin:0; font-size:20px;\">Pregnancy AI Assistant ✅</h2>\n      <p style=\"margin:6px 0 0; font-size:13px; opacity:0.9;\">\n        Daily Risk Summary + Self-Care Guidance\n      </p>\n    </div>\n\n    <!-- Main -->\n    <div style=\"padding:22px; color:#111827;\">\n      \n      <p style=\"margin-top:0; font-size:15px;\">\n        Hello 👋 <br />\n        Here is your latest pregnancy health update:\n      </p>\n\n      <!-- Patient Summary Card -->\n      <div style=\"border:1px solid #e5e7eb; border-radius:12px; padding:16px; background:#f9fafb;\">\n        <p style=\"margin:0 0 10px; font-size:14px;\">\n          <b>Patient ID:</b> <span style=\"color:#2563eb;\">{{$json.patient_id}}</span>\n        </p>\n\n        <div style=\"display:flex; gap:12px; flex-wrap:wrap;\">\n\n          <!-- Preeclampsia -->\n          <div style=\"flex:1; min-width:260px; border-radius:12px; padding:14px; background:#eff6ff; border:1px solid #bfdbfe;\">\n            <div style=\"font-size:14px; font-weight:bold; color:#1d4ed8;\">🩺 Preeclampsia Risk</div>\n            <div style=\"margin-top:6px; font-size:14px;\">\n              <b>Tier:</b> {{ $json.risk_summary_simple.preeclampsia_tier }} <br />\n              <b>Score:</b> {{ $json.risk_summary_simple.preeclampsia_score }}\n            </div>\n          </div>\n\n          <!-- Macrosomia -->\n          <div style=\"flex:1; min-width:260px; border-radius:12px; padding:14px; background:#ecfdf5; border:1px solid #a7f3d0;\">\n            <div style=\"font-size:14px; font-weight:bold; color:#047857;\">👶 Macrosomia Risk</div>\n            <div style=\"margin-top:6px; font-size:14px;\">\n              <b>Tier:</b> {{ $json.risk_summary_simple.macrosomia_tier }}<br />\n              <b>Score:</b> {{ $json.risk_summary_simple.macrosomia_score }}\n            </div>\n          </div>\n\n        </div>\n      </div>\n\n      <!-- Self Care -->\n      <h3 style=\"margin:20px 0 10px; font-size:16px; color:#111827;\">\n        🌿 Self-Care Points for Today\n      </h3>\n\n      <div style=\"border-left:4px solid #22c55e; padding-left:12px; margin-bottom:14px; color:#374151;\">\n        <ol style=\"margin:0; padding-left:18px; font-size:14px; line-height:1.6;\">\n          <li>\n            <b>Monitor BP & symptoms</b><br/>\n            If you notice severe headache, vision changes, upper abdominal pain, or sudden swelling → contact your doctor immediately.\n          </li>\n          <li>\n            <b>Healthy meals</b><br/>\n            Prefer balanced meals (protein + fiber + vegetables). Reduce sweets, sugary drinks, and refined carbs.\n          </li>\n          <li>\n            <b>Light activity</b><br/>\n            Try a 10–20 minute walk after meals (if your doctor allows).\n          </li>\n          <li>\n            <b>Hydration</b><br/>\n            Drink water regularly through the day.\n          </li>\n          <li>\n            <b>Sleep</b><br/>\n            Aim for 7–9 hours of sleep. Take short rest breaks if needed.\n          </li>\n          <li>\n            <b>Consistency</b><br/>\n            Follow your doctor’s schedule for checkups & lab tests.\n          </li>\n        </ol>\n      </div>\n\n      <!-- Chatbot Link -->\n      <h3 style=\"margin:20px 0 10px; font-size:16px; color:#111827;\">\n        💬 Your Personalized Chatbot Link\n      </h3>\n\n      <p style=\"margin:0 0 12px; font-size:14px; color:#374151;\">\n        Open your Pregnancy AI Assistant anytime for more guidance:\n      </p>\n\n      <div style=\"text-align:center; margin:16px 0;\">\n        <a href=\"{{$json.chatbot_link}}\"\n           style=\"display:inline-block; padding:12px 18px; background:#2563eb; color:white; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px;\">\n          Open My Chatbot ✅\n        </a>\n      </div>\n\n      <div style=\"background:#f3f4f6; border-radius:10px; padding:12px; font-size:13px; color:#374151;\">\n        <b>You can use this chatbot to:</b>\n        <ul style=\"margin:8px 0 0; padding-left:18px;\">\n          <li>Check your risk summary</li>\n          <li>Ask questions about food / sugar / BP</li>\n          <li>Get safe self-care coaching</li>\n        </ul>\n      </div>\n\n      <!-- Footer -->\n      <div style=\"margin-top:20px; font-size:12px; color:#6b7280;\">\n        <p style=\"margin:0;\">\n          Take care ❤️ <br/>\n          <b>Pregnancy Care AI System</b>\n        </p>\n        <p style=\"margin:10px 0 0; font-style:italic;\">\n          ⚠️ Note: This is a risk-support tool and does not replace medical advice.\n        </p>\n      </div>\n\n    </div>\n  </div>\n</div>\n",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "=patient_pdf"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4976,
+        -80
+      ],
+      "id": "43a562f4-e5f2-4314-a40b-19c7a1e75efd",
+      "name": "Self-Care Tips",
+      "webhookId": "8b81ee5f-373e-444e-84e2-f4839c0a9344",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Fjk0IAooIQF2avGh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "subhashthippa1248@gmail.com",
+        "subject": "=[Pregnancy AI Alert] Patient {{ $json.patient_id }} — PE: {{ $json.agent_output.preeclampsia_risk_tier }} | MAC: {{ $json.agent_output.macrosomia_risk_tier }}\n",
+        "message": "=<div style=\"font-family:Segoe UI, Arial, sans-serif; background:#f4f7fb; padding:20px;\">\n  <div style=\"max-width:820px; margin:0 auto; background:#ffffff; border-radius:14px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.08); border:1px solid #e5e7eb;\">\n\n    <div style=\"background:linear-gradient(90deg,#0f172a,#2563eb); padding:18px 22px; color:#fff;\">\n      <div style=\"font-size:18px; font-weight:800;\">🩺 Pregnancy AI Alert — Clinical Risk Report</div>\n      <div style=\"margin-top:6px; font-size:13px; opacity:0.95;\">\n        Patient ID: <b>{{ $json.patient_id }}</b> | \n        Timestamp: <b>{{ $json.meta?.timestamp || $json.timestamp }}</b>\n      </div>\n    </div>\n\n    <div style=\"padding:16px 22px; border-bottom:1px solid #eef2f7;\">\n      <div style=\"\n        padding:12px 14px;\n        border-radius:12px;\n        background:#fef2f2;\n        border:1px solid #fecaca;\n        color:#991b1b;\n        font-weight:700;\n        font-size:13px;\n      \">\n        ⚠️ Recommended Action: <span style=\"text-transform:uppercase;\">{{ $json.action_type }}</span>\n      </div>\n\n      <p style=\"margin:10px 0 0; font-size:13px; color:#374151; line-height:1.5;\">\n        <b>System Summary:</b>\n        {{ $json.summary || $json.agent_output?.summary }}\n      </p>\n    </div>\n\n    <div style=\"padding:16px 22px; border-bottom:1px solid #eef2f7;\">\n      <div style=\"display:flex; gap:12px; flex-wrap:wrap;\">\n\n        <div style=\"flex:1; min-width:260px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:12px;\">\n          <div style=\"font-weight:800; color:#111827;\">🩺 Preeclampsia Risk</div>\n          <div style=\"margin-top:8px; font-size:13px;\">\n            Tier: <span style=\"display:inline-block; padding:5px 10px; border-radius:999px; font-weight:800; text-transform:capitalize; background:#fff; border:1px solid #e5e7eb;\">\n              {{ $json.agent_output?.preeclampsia_risk_tier || $json.preeclampsia_risk_tier }}\n            </span>\n          </div>\n          <div style=\"margin-top:6px; font-size:13px;\">\n            Score: <b>{{ $json.agent_output?.preeclampsia_risk_score || $json.preeclampsia_risk_score }}</b>\n          </div>\n          <p style=\"margin:10px 0 0; font-size:12.8px; color:#374151; line-height:1.5;\">\n            {{ $json.agent_output?.preeclampsia_assessment || $json.preeclampsia_assessment }}\n          </p>\n        </div>\n\n        <div style=\"flex:1; min-width:260px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:12px;\">\n          <div style=\"font-weight:800; color:#111827;\">👶 Macrosomia Risk</div>\n          <div style=\"margin-top:8px; font-size:13px;\">\n            Tier: <span style=\"display:inline-block; padding:5px 10px; border-radius:999px; font-weight:800; text-transform:capitalize; background:#fff; border:1px solid #e5e7eb;\">\n              {{ $json.agent_output?.macrosomia_risk_tier || $json.macrosomia_risk_tier }}\n            </span>\n          </div>\n          <div style=\"margin-top:6px; font-size:13px;\">\n            Score: <b>{{ $json.agent_output?.macrosomia_risk_score || $json.macrosomia_risk_score }}</b>\n          </div>\n          <p style=\"margin:10px 0 0; font-size:12.8px; color:#374151; line-height:1.5;\">\n            {{ $json.agent_output.macrosomia_assessment }}\n          </p>\n        </div>\n      </div>\n    </div>\n\n    <div style=\"padding:16px 22px; border-bottom:1px solid #eef2f7;\">\n      <div style=\"font-weight:800; margin-bottom:10px; color:#111827;\">📋 Patient Inputs (Recent)</div>\n      <table style=\"width:100%; border-collapse:collapse; font-size:13px;\">\n        <tr style=\"background:#f3f4f6;\"><th style=\"text-align:left; padding:8px 10px; border:1px solid #e5e7eb;\">Parameter</th><th style=\"text-align:left; padding:8px 10px; border:1px solid #e5e7eb;\">Value</th></tr>\n        <tr><td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Blood Pressure</td><td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output.systolic_bp }}/{{ $json.agent_output.diastolic_bp }} mmHg</td></tr>\n        <tr><td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Glucose (1hr PP)</td><td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output.postprandial_1hr_glucose }} mg/dL</td></tr>\n      </table>\n    </div>\n\n    <div style=\"padding:16px 22px; background:#f8fafc;\">\n      <div style=\"font-weight:800; color:#111827; font-size:13.5px; margin-bottom:12px;\">👩‍⚕️ Doctor Actions <span style=\"font-weight:600; color:#6b7280;\">(1-click Feedback)</span></div>\n      \n      <table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"width:100%;\">\n        <tr>\n          <td align=\"left\" style=\"padding:0;\">\n            <a href=\"http://127.0.0.1:5678/webhook/ack?patient_id={{$json.patient_id}}&action=ack\"\n\n               style=\"display:inline-block; background:#16a34a; color:#ffffff; padding:10px 16px; border-radius:10px; text-decoration:none; font-weight:800; font-size:12px; margin-right:8px; border:1px solid #15803d;\">\n              ✅ Acknowledge Risk\n            </a>\n\n            <a href=\"http://127.0.0.1:5678/webhook/false?patient_id={{$json.patient_id}}&action=false\"\n\n               style=\"display:inline-block; background:#dc2626; color:#ffffff; padding:10px 16px; border-radius:10px; text-decoration:none; font-weight:800; font-size:12px; margin-right:8px; border:1px solid #b91c1c;\">\n              ❌ False Alert\n            </a>\n\n            <a href=\"http://localhost:5678/form/c2cff288-6d93-4e7e-9eca-b7b0d199a826?patient_id={{$json.patient_id}}\"\n               style=\"display:inline-block; background:#2563eb; color:#ffffff; padding:10px 16px; border-radius:10px; text-decoration:none; font-weight:800; font-size:12px; border:1px solid #1d4ed8;\">\n              📝 Detailed Feedback\n            </a>\n          </td>\n        </tr>\n      </table>\n\n      <p style=\"margin-top:14px; font-size:12px; color:#6b7280; line-height:1.4;\">\n        Clicking these buttons automatically logs the clinical outcome to the re-training dataset for <b>Patient {{$json.patient_id}}</b>.\n      </p>\n    </div>\n\n    <div style=\"padding:16px 22px; border-top:1px solid #eef2f7;\">\n      <p style=\"margin:0; font-size:12px; color:#6b7280;\">\n        ⚠️ Note: This is an AI-generated decision-support alert. Clinical judgement must be followed.\n      </p>\n    </div>\n  </div>\n</div>",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "doctor_pdf"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3792,
+        192
+      ],
+      "id": "9c47a888-c069-41c3-81f3-528a31002f19",
+      "name": "Alert Doctor",
+      "webhookId": "4bee035b-3e9b-4b29-bf25-8d5be334ca71",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Fjk0IAooIQF2avGh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8001/generate_doctor_pdf",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "doctor_pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3568,
+        192
+      ],
+      "id": "1ef10ad4-4dbd-4db5-9baa-f70df3585c13",
+      "name": "Doctor PDF Generator"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build_Emergency_Payload\n// Input should already contain merged vitals + model output + agent_output fields\n\nconst j = $json;\n\n// ensure base fields exist\nconst patient_id = j.patient_id || \"UNKNOWN\";\n\n// Determine emergency reason (PE / MAC / BOTH)\nlet emergency_reason = \"URGENT REVIEW\";\nif (j.preeclampsia_risk_tier === \"high\" && j.macrosomia_risk_tier === \"high\") {\n  emergency_reason = \"HIGH PREECLAMPSIA + HIGH MACROSOMIA RISK\";\n} else if (j.preeclampsia_risk_tier === \"high\") {\n  emergency_reason = \"HIGH PREECLAMPSIA RISK\";\n} else if (j.macrosomia_risk_tier === \"high\") {\n  emergency_reason = \"HIGH MACROSOMIA RISK\";\n}\n\n// Force emergency action\nconst out = {\n  ...j,\n\n  // required by downstream nodes\n  patient_id,\n  recommended_action: \"EMERGENCY\",\n  send_alert: true,\n  alert_target: \"hospital\",\n\n  // emergency-specific field (extra)\n  emergency_reason,\n  emergency_flag: true,\n\n  // default timestamp if missing\n  timestamp: j.timestamp || new Date().toISOString(),\n};\n\nreturn [{ json: out }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3568,
+        416
+      ],
+      "id": "a63fb967-0501-4dca-8172-b24b36769cf6",
+      "name": "Build_Emergency_Payload"
+    },
+    {
+      "parameters": {
+        "sendTo": "subhashthippa1248@gmail.com",
+        "subject": "=🚨 EMERGENCY — {{$json.patient_id}} |  {{ $json.preeclampsia_risk_tier === \"high\" && $json.macrosomia_risk_tier === \"high\"   ? \"HIGH PE + HIGH MAC\"   : ($json.preeclampsia_risk_tier === \"high\"       ? \"HIGH PREECLAMPSIA RISK\"       : ($json.macrosomia_risk_tier === \"high\"           ? \"HIGH MACROSOMIA RISK\"           : \"URGENT REVIEW\")) }} | BP {{$json.systolic_bp}}/{{$json.diastolic_bp}} | GA {{$json.gestational_age_weeks}}w",
+        "message": "=<div style=\"font-family:Segoe UI, Arial, sans-serif; background:#0b1220; padding:22px;\">\n\n  <div style=\"max-width:900px; margin:0 auto; background:#ffffff; border-radius:18px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,0.35); border:4px solid #dc2626;\">\n\n    <!-- TOP ALERT STRIPE -->\n    <div style=\"\n      background: repeating-linear-gradient(\n        45deg,\n        #dc2626,\n        #dc2626 14px,\n        #111827 14px,\n        #111827 28px\n      );\n      padding:14px 18px;\n      text-align:center;\n      color:#ffffff;\n      font-weight:900;\n      font-size:16px;\n      letter-spacing:0.7px;\n      text-transform:uppercase;\n    \">\n      🚨 EMERGENCY ALERT — IMMEDIATE ACTION REQUIRED 🚨\n    </div>\n\n    <!-- MAIN HEADER -->\n    <div style=\"background:#111827; color:#ffffff; padding:18px 22px;\">\n      <div style=\"display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;\">\n        <div>\n          <div style=\"font-size:20px; font-weight:900;\">\n            🏥 Pregnancy AI Emergency Triage\n          </div>\n          <div style=\"margin-top:6px; font-size:13px; opacity:0.9;\">\n            <b>Patient ID:</b> <span style=\"background:#dc2626; padding:3px 8px; border-radius:999px; font-weight:800;\">{{$json.patient_id}}</span>\n            &nbsp;&nbsp;|&nbsp;&nbsp;\n            <b>Timestamp:</b> {{$json.timestamp || $json.meta?.timestamp}}\n          </div>\n        </div>\n\n        <div style=\"text-align:right;\">\n          <div style=\"font-size:12px; opacity:0.85;\">System Recommended Action</div>\n          <div style=\"\n            display:inline-block;\n            margin-top:6px;\n            padding:8px 14px;\n            background:#dc2626;\n            color:#fff;\n            font-weight:900;\n            border-radius:12px;\n            font-size:14px;\n            letter-spacing:0.4px;\n          \">\n            ⚠️ EMERGENCY\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- EMERGENCY REASON BIG BLOCK -->\n    <div style=\"padding:18px 22px; border-bottom:1px solid #f3f4f6;\">\n      <div style=\"\n        background:#fef2f2;\n        border:2px solid #dc2626;\n        border-radius:16px;\n        padding:16px;\n      \">\n        <div style=\"font-size:16px; font-weight:900; color:#991b1b;\">\n          🔥 CRITICAL TRIGGER\n        </div>\n\n        <div style=\"margin-top:8px; font-size:14px; color:#111827; font-weight:800;\">\n          {{\n            $json.preeclampsia_risk_tier === \"high\" && $json.macrosomia_risk_tier === \"high\"\n              ? \"HIGH PREECLAMPSIA + HIGH MACROSOMIA RISK\"\n              : ($json.preeclampsia_risk_tier === \"high\"\n                  ? \"HIGH PREECLAMPSIA RISK\"\n                  : ($json.macrosomia_risk_tier === \"high\"\n                      ? \"HIGH MACROSOMIA RISK\"\n                      : \"URGENT CLINICAL REVIEW\"))\n          }}\n        </div>\n\n        <div style=\"margin-top:10px; font-size:13px; color:#374151; line-height:1.55;\">\n          <b>System Summary:</b>\n          {{$json.summary || $json.agent_output?.summary || \"High-risk pregnancy event detected by triage system.\"}}\n        </div>\n      </div>\n    </div>\n\n    <!-- ULTRA QUICK CRITICAL VITALS -->\n    <div style=\"padding:18px 22px; border-bottom:1px solid #f3f4f6;\">\n      <div style=\"font-size:15px; font-weight:900; color:#111827; margin-bottom:10px;\">\n        🚑 Critical Snapshot (Read First)\n      </div>\n\n      <div style=\"display:flex; gap:12px; flex-wrap:wrap;\">\n        <div style=\"flex:1; min-width:220px; border-radius:16px; padding:14px; border:1px solid #fee2e2; background:#fff1f2;\">\n          <div style=\"font-weight:900; color:#991b1b;\">🩸 Blood Pressure</div>\n          <div style=\"margin-top:6px; font-size:18px; font-weight:900; color:#111827;\">\n            {{ $json.agent_output?.systolic_bp || $json.systolic_bp }}/{{ $json.agent_output?.diastolic_bp || $json.diastolic_bp }}\n            <span style=\"font-size:12px; font-weight:700; color:#6b7280;\">mmHg</span>\n          </div>\n        </div>\n\n        <div style=\"flex:1; min-width:220px; border-radius:16px; padding:14px; border:1px solid #fee2e2; background:#fff1f2;\">\n          <div style=\"font-weight:900; color:#991b1b;\">🧪 Proteinuria</div>\n          <div style=\"margin-top:6px; font-size:18px; font-weight:900; color:#111827;\">\n            {{ $json.agent_output?.proteinuria_dipstick || $json.proteinuria_dipstick }}\n            <span style=\"font-size:12px; font-weight:700; color:#6b7280;\">(dipstick 0–3)</span>\n          </div>\n        </div>\n\n        <div style=\"flex:1; min-width:220px; border-radius:16px; padding:14px; border:1px solid #e0f2fe; background:#eff6ff;\">\n          <div style=\"font-weight:900; color:#1d4ed8;\">👶 Gestational Age</div>\n          <div style=\"margin-top:6px; font-size:18px; font-weight:900; color:#111827;\">\n            {{ $json.agent_output?.gestational_age_weeks || $json.gestational_age_weeks }}\n            <span style=\"font-size:12px; font-weight:700; color:#6b7280;\">weeks</span>\n          </div>\n        </div>\n\n        <div style=\"flex:1; min-width:220px; border-radius:16px; padding:14px; border:1px solid #dcfce7; background:#ecfdf5;\">\n          <div style=\"font-weight:900; color:#047857;\">🧬 Glucose</div>\n          <div style=\"margin-top:6px; font-size:13px; font-weight:800; color:#111827;\">\n            Fasting: {{ $json.agent_output?.fasting_glucose || $json.fasting_glucose }} mg/dL<br/>\n            1hr PP: {{ $json.agent_output?.postprandial_1hr_glucose || $json.postprandial_1hr_glucose }} mg/dL\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- RISK CARDS BIGGER DIFFERENT STYLE -->\n    <div style=\"padding:18px 22px; border-bottom:1px solid #f3f4f6;\">\n      <div style=\"font-size:15px; font-weight:900; color:#111827; margin-bottom:12px;\">\n        ⚠️ Risk Classification\n      </div>\n\n      <div style=\"display:flex; gap:14px; flex-wrap:wrap;\">\n\n        <!-- PE -->\n        <div style=\"flex:1; min-width:280px; background:#111827; color:#ffffff; border-radius:18px; padding:16px;\">\n          <div style=\"font-size:14px; font-weight:900;\">\n            🩺 Preeclampsia Risk\n          </div>\n\n          <div style=\"margin-top:10px; font-size:13px;\">\n            Tier:\n            <span style=\"display:inline-block; margin-left:6px; padding:6px 10px; border-radius:999px; background:#dc2626; font-weight:900; text-transform:uppercase;\">\n              {{$json.preeclampsia_risk_tier}}\n            </span>\n          </div>\n\n          <div style=\"margin-top:8px; font-size:13px;\">\n            Score: <b>{{$json.preeclampsia_risk_score}}</b>\n          </div>\n\n          <div style=\"margin-top:10px; font-size:12.7px; line-height:1.55; opacity:0.95;\">\n            {{$json.preeclampsia_assessment || $json.agent_output?.preeclampsia_assessment || \"\"}}\n          </div>\n        </div>\n\n        <!-- MAC -->\n        <div style=\"flex:1; min-width:280px; background:#111827; color:#ffffff; border-radius:18px; padding:16px;\">\n          <div style=\"font-size:14px; font-weight:900;\">\n            👶 Macrosomia Risk\n          </div>\n\n          <div style=\"margin-top:10px; font-size:13px;\">\n            Tier:\n            <span style=\"display:inline-block; margin-left:6px; padding:6px 10px; border-radius:999px; background:#dc2626; font-weight:900; text-transform:uppercase;\">\n              {{$json.macrosomia_risk_tier}}\n            </span>\n          </div>\n\n          <div style=\"margin-top:8px; font-size:13px;\">\n            Score: <b>{{$json.macrosomia_risk_score}}</b>\n          </div>\n\n          <div style=\"margin-top:10px; font-size:12.7px; line-height:1.55; opacity:0.95;\">\n            {{$json.macrosomia_assessment || $json.agent_output?.macrosomia_assessment || \"\"}}\n          </div>\n        </div>\n\n      </div>\n    </div>\n\n    <!-- FULL VITALS TABLE -->\n    <div style=\"padding:18px 22px; border-bottom:1px solid #f3f4f6;\">\n      <div style=\"font-weight:900; margin-bottom:10px; color:#111827;\">\n        📋 Full Patient Inputs (Latest)\n      </div>\n\n      <table style=\"width:100%; border-collapse:collapse; font-size:13px;\">\n        <tr style=\"background:#f3f4f6;\">\n          <th style=\"text-align:left; padding:8px 10px; border:1px solid #e5e7eb;\">Parameter</th>\n          <th style=\"text-align:left; padding:8px 10px; border:1px solid #e5e7eb;\">Value</th>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Gestational Age</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output?.gestational_age_weeks || $json.gestational_age_weeks }} weeks</td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Blood Pressure</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output?.systolic_bp || $json.systolic_bp }}/{{ $json.agent_output?.diastolic_bp || $json.diastolic_bp }} mmHg</td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Proteinuria Dipstick</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output?.proteinuria_dipstick || $json.proteinuria_dipstick }}</td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Symptoms</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">\n            Headache={{ $json.agent_output?.severe_headache || $json.severe_headache }},\n            Vision={{ $json.agent_output.vision_changes }},\n            RUQ Pain={{ $json.agent_output?.upper_abdominal_pain || $json.upper_abdominal_pain }},\n            Swelling={{ $json.agent_output?.swelling_face_hands || $json.swelling_face_hands }}\n          </td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Glucose</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">\n            Fasting={{ $json.agent_output?.fasting_glucose || $json.fasting_glucose }} mg/dL<br/>\n            1hr PP={{ $json.agent_output?.postprandial_1hr_glucose || $json.postprandial_1hr_glucose }} mg/dL\n          </td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">HbA1c</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output?.hba1c || $json.hba1c }}</td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Maternal Context</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">\n            Age={{ $json.agent_output?.maternal_age || $json.maternal_age }},\n            BMI={{ $json.agent_output?.pre_pregnancy_bmi || $json.pre_pregnancy_bmi }},\n            GDM={{ $json.agent_output?.gdm_diagnosed || $json.gdm_diagnosed }}\n          </td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Lifestyle</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">\n            Walk={{ $json.agent_output?.post_meal_walk_minutes || $json.post_meal_walk_minutes }} min,\n            Sleep={{ $json.agent_output?.sleep_hours || $json.sleep_hours }} hrs\n          </td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">Food Log</td>\n          <td style=\"padding:8px 10px; border:1px solid #e5e7eb;\">{{ $json.agent_output?.food_log_text || $json.food_log_text }}</td>\n        </tr>\n      </table>\n    </div>\n\n    <!-- DOCTOR MESSAGE -->\n    <div style=\"padding:18px 22px;\">\n      <div style=\"font-weight:900; margin-bottom:10px; color:#111827;\">📌 AI Suggested Action</div>\n\n      <div style=\"background:#fef2f2; border:2px solid #dc2626; border-radius:16px; padding:14px; font-size:13px; color:#991b1b; line-height:1.6; font-weight:800;\">\n        {{$json.doctor_message || $json.agent_output?.doctor_message || \"Immediate clinical evaluation recommended.\"}}\n      </div>\n\n      <p style=\"margin:12px 0 0; font-size:12px; color:#6b7280;\">\n        ⚠️ This is an AI risk-based emergency alert (decision-support). Not a diagnosis.\n      </p>\n    </div>\n\n  </div>\n\n  <!-- FOOTER OUTSIDE -->\n  <div style=\"max-width:900px; margin:14px auto 0; text-align:center; font-size:12px; color:#cbd5e1;\">\n    Automated Emergency Notification — Pregnancy Agentic AI System\n  </div>\n\n</div>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3792,
+        416
+      ],
+      "id": "1046cdff-08d4-4b66-ab6f-aced71a8dfdf",
+      "name": "Emergency Alert",
+      "webhookId": "400ec9b4-50a7-4bf9-bf1d-0cca98004412",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Fjk0IAooIQF2avGh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1aZH5DPCGzeDN9OvrNFVhxgN6xk1pmtQGfkSyh_Y4yfs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient Id": "={{ $json.patient_id }}",
+            "Preeclampsia Risk Score": "={{ $json.preeclampsia_risk_score }}",
+            "Preeclampsia Risk Tier": "={{ $json.preeclampsia_risk_tier }}",
+            "Macrosomia Risk Score": "={{ $json.macrosomia_risk_score }}",
+            "Macrosomia Risk Tier": "={{ $json.macrosomia_risk_tier }}",
+            "Action Type": "={{ $json.action_type }}",
+            "Priority": "={{ $json.priority }}",
+            "Channels": "={{ $json.channels }}",
+            "Patient Message": "={{ $json.patient_message }}",
+            "Doctor Message": "={{ $json.doctor_message }}",
+            "Emergency Message": "={{ $json.emergency_message }}",
+            "Next Monitoring Time": "={{ $json.next_monitoring_time }}",
+            "Confidence": "={{ $json.confidence }}",
+            "Agent Output Timestamp": "={{ $json.agent_output.timestamp }}",
+            "Gestational Age Weeks": "={{ $json.agent_output.gestational_age_weeks }}",
+            "Maternal Age": "={{ $json.agent_output.maternal_age }}",
+            "Pre Pregnancy Bmi": "={{ $json.agent_output.pre_pregnancy_bmi }}",
+            "Gdm Diagnosed": "={{ $json.agent_output.gdm_diagnosed }}",
+            "Systolic Bp": "={{ $json.agent_output.systolic_bp }}",
+            "Diastolic Bp": "={{ $json.agent_output.diastolic_bp }}",
+            "Severe Headache": "={{ $json.agent_output.severe_headache }}",
+            "Vision Changes": "={{ $json.agent_output.vision_changes }}",
+            "Upper Abdominal Pain": "={{ $json.agent_output.upper_abdominal_pain }}",
+            "Swelling Face Hands": "={{ $json.agent_output.swelling_face_hands }}",
+            "Proteinuria Dipstick": "={{ $json.agent_output.proteinuria_dipstick }}",
+            "Fasting Glucose": "={{ $json.agent_output.fasting_glucose }}",
+            "Postprandial 1Hr Glucose": "={{ $json.agent_output.postprandial_1hr_glucose }}",
+            "Post Meal Walk Minutes": "={{ $json.agent_output.post_meal_walk_minutes }}",
+            "Sleep Hours": "={{ $json.agent_output.sleep_hours }}",
+            "Weight Kg": "={{ $json.agent_output.weight_kg }}",
+            "Hba1c": "={{ $json.agent_output.hba1c }}",
+            "Food Log Text": "={{ $json.agent_output.food_log_text }}",
+            "Summary": "={{ $json.agent_output.summary }}",
+            "Preeclampsia Assessment": "={{ $json.agent_output.preeclampsia_assessment }}",
+            "Macrosomia Assessment": "={{ $json.agent_output.macrosomia_assessment }}",
+            "Recommended Action": "={{ $json.agent_output.recommended_action }}",
+            "Send Alert": "={{ $json.agent_output.send_alert }}",
+            "Alert Target": "={{ $json.agent_output.alert_target }}",
+            "Workflow Run Id": "={{ $json.meta.workflow_run_id }}"
+          },
+          "matchingColumns": [
+            "patientId"
+          ],
+          "schema": [
+            {
+              "id": "Patient Id",
+              "displayName": "Patient Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Risk Score",
+              "displayName": "Preeclampsia Risk Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Risk Tier",
+              "displayName": "Preeclampsia Risk Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Risk Score",
+              "displayName": "Macrosomia Risk Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Risk Tier",
+              "displayName": "Macrosomia Risk Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Action Type",
+              "displayName": "Action Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Channels",
+              "displayName": "Channels",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Message",
+              "displayName": "Patient Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Doctor Message",
+              "displayName": "Doctor Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Emergency Message",
+              "displayName": "Emergency Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Next Monitoring Time",
+              "displayName": "Next Monitoring Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Agent Output Timestamp",
+              "displayName": "Agent Output Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gestational Age Weeks",
+              "displayName": "Gestational Age Weeks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Maternal Age",
+              "displayName": "Maternal Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pre Pregnancy Bmi",
+              "displayName": "Pre Pregnancy Bmi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gdm Diagnosed",
+              "displayName": "Gdm Diagnosed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Systolic Bp",
+              "displayName": "Systolic Bp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Diastolic Bp",
+              "displayName": "Diastolic Bp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Severe Headache",
+              "displayName": "Severe Headache",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vision Changes",
+              "displayName": "Vision Changes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Upper Abdominal Pain",
+              "displayName": "Upper Abdominal Pain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Swelling Face Hands",
+              "displayName": "Swelling Face Hands",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Proteinuria Dipstick",
+              "displayName": "Proteinuria Dipstick",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Fasting Glucose",
+              "displayName": "Fasting Glucose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Postprandial 1Hr Glucose",
+              "displayName": "Postprandial 1Hr Glucose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Meal Walk Minutes",
+              "displayName": "Post Meal Walk Minutes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sleep Hours",
+              "displayName": "Sleep Hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Weight Kg",
+              "displayName": "Weight Kg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hba1c",
+              "displayName": "Hba1c",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Food Log Text",
+              "displayName": "Food Log Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Assessment",
+              "displayName": "Preeclampsia Assessment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Assessment",
+              "displayName": "Macrosomia Assessment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Recommended Action",
+              "displayName": "Recommended Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Send Alert",
+              "displayName": "Send Alert",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Alert Target",
+              "displayName": "Alert Target",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow Run Id",
+              "displayName": "Workflow Run Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2496,
+        -16
+      ],
+      "id": "974fec4c-e8bc-439d-a5c7-1b7fa578fc13",
+      "name": "AI Logs",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tgTJ0tVGHBajplU7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Preeclampsia Risk Score": "={{ $json.preeclampsia_risk_score }}",
+            "Preeclampsia Risk Tier": "={{ $json.preeclampsia_risk_tier }}",
+            "Macrosomia Risk Score": "={{ $json.macrosomia_risk_score }}",
+            "Macrosomia Risk Tier": "={{ $json.macrosomia_risk_tier }}",
+            "Patient Id": "={{ $json.agent_output.patient_id }}",
+            "Timestamp": "={{ $json.agent_output.timestamp }}",
+            "Gestational Age Weeks": "={{ $json.agent_output.gestational_age_weeks }}",
+            "Maternal Age": "={{ $json.agent_output.maternal_age }}",
+            "Pre Pregnancy Bmi": "={{ $json.agent_output.pre_pregnancy_bmi }}",
+            "Gdm Diagnosed": "={{ $json.agent_output.gdm_diagnosed }}",
+            "Systolic Bp": "={{ $json.agent_output.systolic_bp }}",
+            "Diastolic Bp": "={{ $json.agent_output.diastolic_bp }}",
+            "Severe Headache": "={{ $json.agent_output.severe_headache }}",
+            "Vision Changes": "={{ $json.agent_output.vision_changes }}",
+            "Upper Abdominal Pain": "={{ $json.agent_output.upper_abdominal_pain }}",
+            "Swelling Face Hands": "={{ $json.agent_output.swelling_face_hands }}",
+            "Proteinuria Dipstick": "={{ $json.agent_output.proteinuria_dipstick }}",
+            "Fasting Glucose": "={{ $json.agent_output.fasting_glucose }}",
+            "Postprandial 1Hr Glucose": "={{ $json.agent_output.postprandial_1hr_glucose }}",
+            "Post Meal Walk Minutes": "={{ $json.agent_output.post_meal_walk_minutes }}",
+            "Sleep Hours": "={{ $json.agent_output.sleep_hours }}",
+            "Weight Kg": "={{ $json.agent_output.weight_kg }}",
+            "Hba1c": "={{ $json.agent_output.hba1c }}",
+            "Food Log Text": "={{ $json.agent_output.food_log_text }}",
+            "Preeclampsia Model Version": "={{ $json[\"Preeclampsia Model Version\"] }}",
+            "Macrosomia Model Version": "={{ $json[\"Macrosomia Model Version\"] }}"
+          },
+          "matchingColumns": [
+            "patientId"
+          ],
+          "schema": [
+            {
+              "id": "Preeclampsia Risk Score",
+              "displayName": "Preeclampsia Risk Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Risk Tier",
+              "displayName": "Preeclampsia Risk Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Risk Score",
+              "displayName": "Macrosomia Risk Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Risk Tier",
+              "displayName": "Macrosomia Risk Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Id",
+              "displayName": "Patient Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gestational Age Weeks",
+              "displayName": "Gestational Age Weeks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Maternal Age",
+              "displayName": "Maternal Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pre Pregnancy Bmi",
+              "displayName": "Pre Pregnancy Bmi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gdm Diagnosed",
+              "displayName": "Gdm Diagnosed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Systolic Bp",
+              "displayName": "Systolic Bp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Diastolic Bp",
+              "displayName": "Diastolic Bp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Severe Headache",
+              "displayName": "Severe Headache",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vision Changes",
+              "displayName": "Vision Changes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Upper Abdominal Pain",
+              "displayName": "Upper Abdominal Pain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Swelling Face Hands",
+              "displayName": "Swelling Face Hands",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Proteinuria Dipstick",
+              "displayName": "Proteinuria Dipstick",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Fasting Glucose",
+              "displayName": "Fasting Glucose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Postprandial 1Hr Glucose",
+              "displayName": "Postprandial 1Hr Glucose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Meal Walk Minutes",
+              "displayName": "Post Meal Walk Minutes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sleep Hours",
+              "displayName": "Sleep Hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Weight Kg",
+              "displayName": "Weight Kg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hba1c",
+              "displayName": "Hba1c",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Food Log Text",
+              "displayName": "Food Log Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Risk Tier Pred",
+              "displayName": "Preeclampsia Risk Tier Pred",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Risk Tier Pred",
+              "displayName": "Macrosomia Risk Tier Pred",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Risk Tier True",
+              "displayName": "Preeclampsia Risk Tier True",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Risk Tier True",
+              "displayName": "Macrosomia Risk Tier True",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Doctor Action",
+              "displayName": "Doctor Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Doctor Comment",
+              "displayName": "Doctor Comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preeclampsia Model Version",
+              "displayName": "Preeclampsia Model Version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Macrosomia Model Version",
+              "displayName": "Macrosomia Model Version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback Source",
+              "displayName": "Feedback Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2496,
+        -176
+      ],
+      "id": "f7984861-aaac-4fd1-815f-fe15d6e33dbd",
+      "name": "Re-Training Data Log1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tgTJ0tVGHBajplU7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/*.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        592,
+        -544
+      ],
+      "id": "d9d4ad02-abfc-4b27-8928-0bdd2d08574f",
+      "name": "Read/Write Files from Disk",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        816,
+        -544
+      ],
+      "id": "c7890d6c-d2bc-4288-a3ee-4838c3fd0d0e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chunkSize = 500;\nconst overlap = 50;\n\nconst text = $input.first().json.text;\n\nlet chunks = [];\nlet start = 0;\n\nwhile (start < text.length) {\n  const end = start + chunkSize;\n  chunks.push({\n    json: {\n      chunk: text.slice(start, end)\n    }\n  });\n  start += chunkSize - overlap;\n}\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        -544
+      ],
+      "id": "380c6f10-81ab-4cb6-855b-39b7f8b93816",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      chunk: item.json.chunk.replace(/\\s+/g, \" \").trim()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -544
+      ],
+      "id": "a440437f-d176-4c78-ba27-2df35ed7626b",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chunks = $input.all().map(item => item.json.chunk);\n\nreturn [\n  {\n    json: {\n      knowledge_base: chunks\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        -544
+      ],
+      "id": "d63e43f7-8213-42ed-a56c-9c785f88978b",
+      "name": "Store all chunks"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chunks = $json.data.knowledge_base || [];\n\nconst query = JSON.stringify($json.patient_data || $json);\n\nconst words = query.toLowerCase().split(/\\W+/);\n\nconst scored = chunks.map(chunk => {\n  const text = chunk.toLowerCase();\n  let score = 0;\n\n  for (const word of words) {\n    if (text.includes(word)) {\n      score++;\n    }\n  }\n\n  return { chunk, score };\n});\n\nscored.sort((a, b) => b.score - a.score);\n\nconst topChunks = scored.slice(0, 5).map(c => c.chunk);\n\nreturn [\n  {\n    json: {\n      retrieved_chunks: topChunks,\n      patient_data: $json.patient_data\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        192
+      ],
+      "id": "e32e983f-c906-4542-b057-bb6446088785",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/knowledge_base_chunks.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        -544
+      ],
+      "id": "a3c95c15-121b-4814-ad40-7ec45c38bfc0",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = JSON.stringify($json, null, 2);\n\nreturn [\n  {\n    binary: {\n      data: {\n        data: Buffer.from(data),\n        mimeType: \"application/json\",\n        fileName: \"knowledge_base.json\"\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        -544
+      ],
+      "id": "53e3332c-6a4c-4f35-babe-73b8b8139e1d",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/node/knowledge_base_chunks.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        640,
+        0
+      ],
+      "id": "085d616a-fa16-4d86-a8d3-cc6a4d0d1583",
+      "name": "Read/Write Files from Disk2"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "d3393d62-155f-4853-8904-b198a6561fec",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      patient_data: $json\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        192
+      ],
+      "id": "9de51a1a-03c8-404d-b9bd-685ca614001c",
+      "name": "Code7"
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "query": "SELECT *\nFROM input1\nCROSS JOIN input2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        976,
+        192
+      ],
+      "id": "c02e7aa5-1f31-4c70-9962-caaaa3e1aafa",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Root object from workflow\nconst root = $json;\n\n// AI generated analysis\nconst d = $json.agent_output || {};\n\nlet safety_passed = true;\nlet issues = [];\n\n/* ---------------------------------------------------\n1️⃣ REQUIRED FIELD CHECK\n--------------------------------------------------- */\n\nconst required_fields = [\n  \"summary\",\n  \"preeclampsia_assessment\",\n  \"macrosomia_assessment\",\n  \"recommended_action\",\n  \"patient_message\",\n  \"doctor_message\",\n  \"confidence\"\n];\n\nfor (const field of required_fields) {\n  if (!d[field]) {\n    safety_passed = false;\n    issues.push(`Missing required field: ${field}`);\n  }\n}\n\n/* ---------------------------------------------------\n2️⃣ VALID ACTION CHECK\n--------------------------------------------------- */\n\nconst allowed_actions = [\n  \"LOG_ONLY\",\n  \"COACH_PATIENT\",\n  \"ALERT_DOCTOR\",\n  \"EMERGENCY\"\n];\n\nif (!allowed_actions.includes(d.recommended_action)) {\n  safety_passed = false;\n  issues.push(\"Invalid recommended_action value.\");\n}\n\n/* ---------------------------------------------------\n3️⃣ SEVERE HYPERTENSION SAFETY RULE\nBP ≥160 / 110 must escalate\n--------------------------------------------------- */\n\nif (d.systolic_bp >= 160 || d.diastolic_bp >= 110) {\n  if (d.recommended_action !== \"EMERGENCY\") {\n    safety_passed = false;\n    issues.push(\n      \"Severe hypertension detected but AI did not escalate to EMERGENCY.\"\n    );\n  }\n}\n\n/* ---------------------------------------------------\n4️⃣ HYPERTENSION RULE\nBP ≥140 / 90 cannot be LOG_ONLY\n--------------------------------------------------- */\n\nif (d.systolic_bp >= 140 || d.diastolic_bp >= 90) {\n  if (d.recommended_action === \"LOG_ONLY\") {\n    safety_passed = false;\n    issues.push(\n      \"Hypertension detected but AI recommended LOG_ONLY.\"\n    );\n  }\n}\n\n/* ---------------------------------------------------\n5️⃣ PROTEINURIA + BP CHECK (possible preeclampsia)\n--------------------------------------------------- */\n\nif (\n  d.proteinuria_dipstick >= 2 &&\n  (d.systolic_bp >= 140 || d.diastolic_bp >= 90)\n) {\n  if (d.recommended_action === \"LOG_ONLY\") {\n    safety_passed = false;\n    issues.push(\n      \"Possible preeclampsia signs but AI recommended LOG_ONLY.\"\n    );\n  }\n}\n\n/* ---------------------------------------------------\n6️⃣ AI vs ML MODEL DISAGREEMENT CHECK\n--------------------------------------------------- */\n\nconst peModelTier = root.preeclampsia_risk_tier;\nconst macModelTier = root.macrosomia_risk_tier;\nconst aiAction = d.recommended_action;\n\n// Preeclampsia disagreement\nif (peModelTier === \"high\" && aiAction !== \"EMERGENCY\") {\n  safety_passed = false;\n  issues.push(\n    \"Model indicates HIGH preeclampsia risk but AI did not escalate.\"\n  );\n}\n\nif (peModelTier === \"medium\" && aiAction === \"LOG_ONLY\") {\n  safety_passed = false;\n  issues.push(\n    \"Model indicates MEDIUM preeclampsia risk but AI downgraded to LOG_ONLY.\"\n  );\n}\n\n// Macrosomia disagreement\nif (macModelTier === \"high\" && aiAction === \"LOG_ONLY\") {\n  safety_passed = false;\n  issues.push(\n    \"Model indicates HIGH macrosomia risk but AI recommended LOG_ONLY.\"\n  );\n}\n\n/* ---------------------------------------------------\n7️⃣ CONFIDENCE SANITY CHECK\n--------------------------------------------------- */\n\nif (typeof d.confidence !== \"number\") {\n  safety_passed = false;\n  issues.push(\"Confidence must be numeric.\");\n}\n\nif (d.confidence < 0.4) {\n  issues.push(\"Low AI confidence output.\");\n}\n\n/* ---------------------------------------------------\n8️⃣ OUTPUT\n--------------------------------------------------- */\n\nreturn [\n  {\n    json: {\n      ...root,\n      safety_passed,\n      safety_issues: issues\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        192
+      ],
+      "id": "b4ffb43a-d21f-4e82-b3aa-8a2f16765b9f",
+      "name": "Clinical Safety Guardrail"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f10be7f5-097f-4f72-85f6-783493f804fd",
+              "leftValue": "={{ $json.safety_passed }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2576,
+        192
+      ],
+      "id": "e856210e-d8cf-4561-b91c-34eddc7db043",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\n\n// initialize retry_count if it doesn't exist\nif (!data.retry_count) {\n  data.retry_count = 0;\n}\n\n// increment retry\ndata.retry_count += 1;\n\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2736,
+        400
+      ],
+      "id": "287354c2-d66d-40b7-a5f9-719aa16f11ff",
+      "name": "Increment Retry Count"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2218098a-f608-4aa3-84fe-c8a3be203b74",
+              "leftValue": "={{ $json.retry_count }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2944,
+        400
+      ],
+      "id": "bd72a5ad-b33d-46eb-867a-84255a6e2074",
+      "name": "Retry Limit Check"
+    },
+    {
+      "parameters": {
+        "sendTo": "subhashthippa1248@gmail.com",
+        "subject": "🚨 AI Guardrail Failure – Workflow Intervention Required",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>\nbody{\n  font-family: Arial, Helvetica, sans-serif;\n  background:#f4f6f8;\n  margin:0;\n  padding:20px;\n}\n\n.container{\n  max-width:800px;\n  margin:auto;\n  background:white;\n  border-radius:8px;\n  padding:25px;\n  box-shadow:0 2px 10px rgba(0,0,0,0.1);\n}\n\n.header{\n  background:#d32f2f;\n  color:white;\n  padding:15px;\n  border-radius:6px;\n  font-size:20px;\n  font-weight:bold;\n}\n\n.section{\n  margin-top:20px;\n}\n\n.label{\n  font-weight:bold;\n  color:#333;\n}\n\n.value{\n  margin-top:5px;\n  margin-bottom:10px;\n}\n\n.code{\n  background:#1e1e1e;\n  color:#eaeaea;\n  padding:15px;\n  border-radius:6px;\n  font-family: monospace;\n  font-size:13px;\n  overflow-x:auto;\n}\n\n.warning{\n  margin-top:20px;\n  padding:15px;\n  background:#fff3cd;\n  border-left:5px solid #ffa000;\n  border-radius:4px;\n}\n\n.footer{\n  margin-top:30px;\n  font-size:12px;\n  color:#666;\n  border-top:1px solid #eee;\n  padding-top:10px;\n}\n</style>\n</head>\n\n<body>\n\n<div class=\"container\">\n\n<div class=\"header\">\n🚨 AI Guardrail Failure Detected\n</div>\n\n<div class=\"section\">\n<div class=\"label\">Workflow Run ID</div>\n<div class=\"value\">{{$json.meta.workflow_run_id}}</div>\n\n<div class=\"label\">Patient ID</div>\n<div class=\"value\">{{$json.patient_id}}</div>\n\n<div class=\"label\">Retry Count</div>\n<div class=\"value\">{{$json.retry_count}}</div>\n\n<div class=\"label\">Timestamp</div>\n<div class=\"value\">{{$json.meta.timestamp}}</div>\n</div>\n\n<div class=\"section\">\n<div class=\"label\">Safety Issues</div>\n<div class=\"code\">\n{{JSON.stringify($json.safety_issues, null, 2)}}\n</div>\n</div>\n\n<div class=\"section\">\n<div class=\"label\">AI Output</div>\n<div class=\"code\">\n{{JSON.stringify($json.agent_output, null, 2)}}\n</div>\n</div>\n\n<div class=\"warning\">\nThe system attempted automatic retries but the clinical safety guardrails continued to fail.<br><br>\nManual investigation by the engineering or clinical AI team is required.\n</div>\n\n<div class=\"footer\">\nPregnancy Monitoring AI System • Guardrail Alert\n</div>\n\n</div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3152,
+        416
+      ],
+      "id": "98b89d1b-6ee7-4b78-8782-ce6805655bc6",
+      "name": "Guardrail Alert",
+      "webhookId": "42e0b17d-9ba3-43b4-bebe-b271a51c1b38",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Fjk0IAooIQF2avGh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      \"patient_id\": \"TEST_GUARDRAIL_FAIL\",\n      \"preeclampsia_risk_score\": 0.82,\n      \"preeclampsia_risk_tier\": \"high\",\n      \"macrosomia_risk_score\": 0.40,\n      \"macrosomia_risk_tier\": \"medium\",\n      \"retry_count\": 2,\n      \"action_type\": \"LOG_ONLY\",\n      \"priority\": \"low\",\n      \"channels\": [\n        \"log\"\n      ],\n      \"patient_message\": \"Everything looks normal.\",\n      \"doctor_message\": \"Vitals slightly elevated but no action needed.\",\n      \"emergency_message\": \"\",\n      \"next_monitoring_time\": \"Regular prenatal visit\",\n      \"confidence\": 0.95,\n      \"agent_output\": {\n        \"preeclampsia_risk_score\": 0.82,\n        \"preeclampsia_risk_tier\": \"high\",\n        \"macrosomia_risk_score\": 0.40,\n        \"macrosomia_risk_tier\": \"medium\",\n        \"model_loaded\": {\n          \"preeclampsia_dir\": \"models\\\\preeclampsia_v1\",\n          \"macrosomia_dir\": \"models\\\\macrosomia_v1\"\n        },\n        \"patient_id\": \"TEST_GUARDRAIL_FAIL\",\n        \"timestamp\": \"2026-03-11T10:12:00Z\",\n        \"gestational_age_weeks\": 31,\n        \"maternal_age\": 32,\n        \"pre_pregnancy_bmi\": 31,\n        \"gdm_diagnosed\": 1,\n        \"systolic_bp\": 168,\n        \"diastolic_bp\": 112,\n        \"severe_headache\": 1,\n        \"vision_changes\": 1,\n        \"upper_abdominal_pain\": 1,\n        \"swelling_face_hands\": 1,\n        \"proteinuria_dipstick\": 3,\n        \"fasting_glucose\": 118,\n        \"postprandial_1hr_glucose\": 182,\n        \"post_meal_walk_minutes\": 0,\n        \"sleep_hours\": 5,\n        \"weight_kg\": 92,\n        \"hba1c\": 6.2,\n        \"food_log_text\": \"High carb meal\",\n        \"summary\": \"Patient shows elevated blood pressure and symptoms.\",\n        \"preeclampsia_assessment\": \"Blood pressure indicates severe hypertension.\",\n        \"macrosomia_assessment\": \"Glucose levels elevated with high BMI.\",\n        \"recommended_action\": \"LOG_ONLY\",\n        \"send_alert\": false,\n        \"alert_target\": \"none\",\n        \"patient_message\": \"Everything looks normal.\",\n        \"doctor_message\": \"No urgent concerns.\",\n        \"next_monitoring_time\": \"Next appointment\",\n        \"confidence\": 0.95\n      },\n      \"meta\": {\n        \"timestamp\": \"2026-03-11T10:12:00Z\",\n        \"workflow_run_id\": \"TEST_RETRY_FAIL\"\n      },\n      \"safety_passed\": false,\n      \"safety_issues\": []\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2736,
+        -96
+      ],
+      "id": "8fe481db-56b6-473c-be66-e78c0bedbac8",
+      "name": "Guardrail Sample data"
+    },
+    {
+      "parameters": {
+        "formTitle": "Doctor Feedback Form",
+        "formDescription": "Please provide feedback about this alert.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Feedback",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Select",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Acknowledge"
+                  },
+                  {
+                    "option": "False Alert"
+                  },
+                  {
+                    "option": "Escalate"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldType": "hiddenField",
+              "fieldName": "=patient_id",
+              "fieldValue": "={{$query.patient_id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        800
+      ],
+      "id": "d8fd96b4-a421-4a48-80ab-e9eab0839837",
+      "name": "Feedback Form",
+      "webhookId": "c2cff288-6d93-4e7e-9eca-b7b0d199a826",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clone input safely\nconst data = { ...$json };\n\n// Access model paths\nconst pe_path = data.agent_output?.model_loaded?.preeclampsia_dir;\nconst mac_path = data.agent_output?.model_loaded?.macrosomia_dir;\n\n\n// Function to extract version safely (works for both / and \\)\nfunction extractVersion(path) {\n  if (!path) return \"\";\n  return path.split(/[/\\\\]/).pop(); // handles Windows + Linux paths\n}\n\n\n// Extract versions\nconst pe_version = extractVersion(pe_path);\nconst mac_version = extractVersion(mac_path);\n\n\n// Add new fields (without modifying anything else)\ndata[\"Preeclampsia Model Version\"] = pe_version;\ndata[\"Macrosomia Model Version\"] = mac_version;\n\n\n// Return full unchanged JSON + new fields\nreturn [\n  {\n    json: data\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        -176
+      ],
+      "id": "fc62c7c5-3d95-4a06-878d-e494c77f937c",
+      "name": "Code8"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback Source": "={{$json[\"Feedback Source\"]}}",
+            "Doctor Comment": "={{$json[\"Doctor Comment\"]}}",
+            "Doctor Action": "={{$json[\"Doctor Action\"]}}",
+            "Macrosomia Risk Tier True": "={{$json[\"Macrosomia Risk Tier True\"]}}",
+            "Preeclampsia Risk Tier True": "={{$json[\"Preeclampsia Risk Tier True\"]}}",
+            "Macrosomia Risk Tier Pred": "={{$json[\"Macrosomia Risk Tier Pred\"]}}",
+            "Preeclampsia Risk Tier Pred": "={{$json[\"Preeclampsia Risk Tier Pred\"]}}",
+            "Patient Id": "={{$json[\"Patient Id\"]}}"
+          },
+          "matchingColumns": [
+            "Patient Id"
+          ],
+          "schema": [
+            {
+              "id": "Preeclampsia Risk Score",
+              "displayName": "Preeclampsia Risk Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preeclampsia Risk Tier",
+              "displayName": "Preeclampsia Risk Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Macrosomia Risk Score",
+              "displayName": "Macrosomia Risk Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Macrosomia Risk Tier",
+              "displayName": "Macrosomia Risk Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Id",
+              "displayName": "Patient Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gestational Age Weeks",
+              "displayName": "Gestational Age Weeks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Maternal Age",
+              "displayName": "Maternal Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pre Pregnancy Bmi",
+              "displayName": "Pre Pregnancy Bmi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gdm Diagnosed",
+              "displayName": "Gdm Diagnosed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Systolic Bp",
+              "displayName": "Systolic Bp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Diastolic Bp",
+              "displayName": "Diastolic Bp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severe Headache",
+              "displayName": "Severe Headache",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vision Changes",
+              "displayName": "Vision Changes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Upper Abdominal Pain",
+              "displayName": "Upper Abdominal Pain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Swelling Face Hands",
+              "displayName": "Swelling Face Hands",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Proteinuria Dipstick",
+              "displayName": "Proteinuria Dipstick",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fasting Glucose",
+              "displayName": "Fasting Glucose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Postprandial 1Hr Glucose",
+              "displayName": "Postprandial 1Hr Glucose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Meal Walk Minutes",
+              "displayName": "Post Meal Walk Minutes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sleep Hours",
+              "displayName": "Sleep Hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Weight Kg",
+              "displayName": "Weight Kg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hba1c",
+              "displayName": "Hba1c",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Food Log Text",
+              "displayName": "Food Log Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preeclampsia Risk Tier Pred",
+              "displayName": "Preeclampsia Risk Tier Pred",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Macrosomia Risk Tier Pred",
+              "displayName": "Macrosomia Risk Tier Pred",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preeclampsia Risk Tier True",
+              "displayName": "Preeclampsia Risk Tier True",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Macrosomia Risk Tier True",
+              "displayName": "Macrosomia Risk Tier True",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Doctor Action",
+              "displayName": "Doctor Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Doctor Comment",
+              "displayName": "Doctor Comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preeclampsia Model Version",
+              "displayName": "Preeclampsia Model Version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Macrosomia Model Version",
+              "displayName": "Macrosomia Model Version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback Source",
+              "displayName": "Feedback Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        944
+      ],
+      "id": "cf0df766-fc3e-4f58-ba95-b79209ca51a0",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tgTJ0tVGHBajplU7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA",
+          "mode": "list",
+          "cachedResultName": "Re_Train Data Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Patient Id",
+              "lookupValue": "={{$json.patient_id}}"
+            }
+          ]
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          },
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          },
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        944
+      ],
+      "id": "c1771ed0-6093-49ee-bd58-d2a16056702d",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tgTJ0tVGHBajplU7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $json.query || {};\nconst body = $json.body || {};\n\nreturn [\n  {\n    json: {\n      patient_id: query.patient_id || body.patient_id,\n      action: query.action || body.action,\n\n      Select: body.Select || query.Select || body.select || query.select || \"\",\n      Feedback: body.Feedback || query.Feedback || body.feedback || query.feedback || \"\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        944
+      ],
+      "id": "bd3fbf4e-a05a-464f-a676-981ee97ff391",
+      "name": "Code9"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        576,
+        1184
+      ],
+      "id": "e7be0029-72a3-4741-9504-fea06e085c04",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// STEP 1 — Read merged data\n// ==========================================\n\nconst patient_id = $json.patient_id;\nconst action = $json.action;\nconst doctorSelect = $json.Select;\nconst doctorFeedback = $json.Feedback;\n\n\n// ==========================================\n// STEP 2 — Define doctor action + comments\n// ==========================================\n\nlet doctorAction = \"N/A\";\nlet doctorComment = \"\";\nlet feedback_source = \"unknown\";\n\n// ✅ ACK\nif (action === \"ack\") {\n  doctorAction = \"Acknowledge\";\n  doctorComment = \"Doctor acknowledged the alert\";\n  feedback_source = \"ack_webhook\";\n}\n\n// ❌ FALSE ALERT\nif (action === \"false\") {\n  doctorAction = \"False Alert\";\n  doctorComment = \"Doctor marked this as false alert\";\n  feedback_source = \"false_webhook\";\n}\n\n// 📝 FORM (dynamic input)\nif (doctorSelect) {\n  doctorAction = doctorSelect;\n  doctorComment = doctorFeedback || \"Doctor provided feedback\";\n  feedback_source = \"form_feedback\";\n}\n\n\n// ==========================================\n// STEP 3 — Extract predicted tiers (from sheet)\n// ==========================================\n\nconst pe_pred = $json[\"Preeclampsia Risk Tier\"];\nconst macro_pred = $json[\"Macrosomia Risk Tier\"];\n\n\n// ==========================================\n// STEP 4 — Map corrected labels\n// ==========================================\n\nfunction mapDoctorLabel(predicted, doctorAction) {\n\n  if (!predicted) return \"\";\n\n  if (doctorAction === \"False Alert\") {\n    if (predicted === \"high\") return \"medium\";\n    if (predicted === \"medium\") return \"low\";\n    return \"low\";\n  }\n\n  if (doctorAction === \"Escalate\") return \"high\";\n\n  if (doctorAction === \"Acknowledge\") return predicted;\n\n  return predicted;\n}\n\nconst pe_true = mapDoctorLabel(pe_pred, doctorAction);\nconst macro_true = mapDoctorLabel(macro_pred, doctorAction);\n\n\n// ==========================================\n// STEP 5 — Final output\n// ==========================================\n\nreturn [\n  {\n    json: {\n      \"Patient Id\": patient_id,\n\n      \"Preeclampsia Risk Tier Pred\": pe_pred,\n      \"Macrosomia Risk Tier Pred\": macro_pred,\n\n      \"Preeclampsia Risk Tier True\": pe_true,\n      \"Macrosomia Risk Tier True\": macro_true,\n\n      \"Doctor Action\": doctorAction,\n      \"Doctor Comment\": doctorComment,\n      \"Feedback Source\": feedback_source\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        944
+      ],
+      "id": "f65d5ffc-13cd-4b2f-a9f1-b1e1dcf35a71",
+      "name": "Data Formatting before storage"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA",
+          "mode": "list",
+          "cachedResultName": "Re_Train Data Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bNtOFyRIvvpMzm9PcYaRKi9RtqdjaqEUOXr9X6A3XXA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1632,
+        1008
+      ],
+      "id": "007d0b24-50eb-4f85-847e-6bc5728afd83",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tgTJ0tVGHBajplU7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(i => {\n  return {\n    json: {\n      gestational_age_weeks: i.json[\"Gestational Age Weeks\"],\n      maternal_age: i.json[\"Maternal Age\"],\n      pre_pregnancy_bmi: i.json[\"Pre Pregnancy Bmi\"],\n      gdm_diagnosed: i.json[\"Gdm Diagnosed\"],\n\n      systolic_bp: i.json[\"Systolic Bp\"],\n      diastolic_bp: i.json[\"Diastolic Bp\"],\n      severe_headache: i.json[\"Severe Headache\"],\n      vision_changes: i.json[\"Vision Changes\"],\n      upper_abdominal_pain: i.json[\"Upper Abdominal Pain\"],\n      swelling_face_hands: i.json[\"Swelling Face Hands\"],\n      proteinuria_dipstick: i.json[\"Proteinuria Dipstick\"],\n\n      fasting_glucose: i.json[\"Fasting Glucose\"],\n      postprandial_1hr_glucose: i.json[\"Postprandial 1Hr Glucose\"],\n      post_meal_walk_minutes: i.json[\"Post Meal Walk Minutes\"],\n      sleep_hours: i.json[\"Sleep Hours\"],\n      weight_kg: i.json[\"Weight Kg\"],\n      hba1c: i.json[\"Hba1c\"],\n\n      pe_label: i.json[\"Preeclampsia Risk Tier True\"],\n      macro_label: i.json[\"Macrosomia Risk Tier True\"]\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        1008
+      ],
+      "id": "11d86dc0-0d7a-4837-a424-0c42408cdc3e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: items.map(i => i.json)\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        1008
+      ],
+      "id": "e9ada735-9c00-4a99-a79c-ade7551806de",
+      "name": "Code10"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Patient Profile Source",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Live Vitals Source",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Symptoms Check-In Source",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Food Log Source",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Labs Source",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parsing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsing": {
+      "main": [
+        [
+          {
+            "node": "Build_Action_Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acknowledge Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FalseAlert Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preprocessing Node (Data Fusion, Cleaning, Imputation)": {
+      "main": [
+        [
+          {
+            "node": "ML Model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merger Node": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ML Model": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Label Mapping": {
+      "main": [
+        [
+          {
+            "node": "Code10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patient Profile Source": {
+      "main": [
+        [
+          {
+            "node": "Merger Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Live Vitals Source": {
+      "main": [
+        [
+          {
+            "node": "Merger Node",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Symptoms Check-In Source": {
+      "main": [
+        [
+          {
+            "node": "Merger Node",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Labs Source": {
+      "main": [
+        [
+          {
+            "node": "Merger Node",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Food Log Source": {
+      "main": [
+        [
+          {
+            "node": "Merger Node",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Recommended Action": {
+      "main": [
+        [
+          {
+            "node": "Patient PDF Content Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Doctor PDF Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build_Emergency_Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build_Action_Payload": {
+      "main": [
+        [
+          {
+            "node": "AI Logs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Clinical Safety Guardrail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate_Chatbot_Link": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Data": {
+      "main": [
+        [
+          {
+            "node": "Preprocessing Node (Data Fusion, Cleaning, Imputation)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Patient PDF Content Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patient PDF Content Agent": {
+      "main": [
+        [
+          {
+            "node": "Parsing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsing1": {
+      "main": [
+        [
+          {
+            "node": "Generate_Chatbot_Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Patient PDF generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patient PDF generator": {
+      "main": [
+        [
+          {
+            "node": "Self-Care Tips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doctor PDF Generator": {
+      "main": [
+        [
+          {
+            "node": "Alert Doctor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build_Emergency_Payload": {
+      "main": [
+        [
+          {
+            "node": "Emergency Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Store all chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store all chunks": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk2": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clinical Safety Guardrail": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Recommended Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Increment Retry Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Retry Count": {
+      "main": [
+        [
+          {
+            "node": "Retry Limit Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Limit Check": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardrail Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardrail Sample data": {
+      "main": [
+        []
+      ]
+    },
+    "Feedback Form": {
+      "main": [
+        [
+          {
+            "node": "Code9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code8": {
+      "main": [
+        [
+          {
+            "node": "Re-Training Data Log1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code9": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Data Formatting before storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Formatting before storage": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Label Mapping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code10": {
+      "main": [
+        [
+          {
+            "node": "Re-train Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "147ae9cc-8541-417a-94cb-76542a2df85a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "08394f1e580526ad8a8c22807f4b3ed83cbfb16387eb82c4ce2e9f6f2e26b63f"
+  },
+  "id": "6rfYZSWrQPKN1Ers",
+  "tags": []
+}
